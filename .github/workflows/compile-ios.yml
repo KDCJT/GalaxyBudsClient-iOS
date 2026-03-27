@@ -39,20 +39,27 @@ jobs:
           -p:IsiOS=true \
           -p:MtouchLink=SdkOnly \
           -p:UseInterpreter=true \
-          /p:BuildIpa=false \
-          /p:EnableCodeSigning=false \
-          /p:_SkipCodeSignature=true \
-          /p:CodesignKey="" \
+          -p:MtouchInterpreter=all \
+          -p:CodesignEntitlements="Entitlements.plist" \
+          /p:BuildIpa=true \
+          /p:EnableCodeSigning=true \
+          /p:CodesignKey="-" \
           /p:CodesignProvision=""
 
     - name: Prepare IPA for Upload (TrollStore)
       run: |
-        mkdir -p Payload
-        # Find the .app directory dynamically to avoid path issues
-        APP_PATH=$(find ./GalaxyBudsClient.iOS/bin -name "*.app" -type d | head -n 1)
-        echo "Found app at: $APP_PATH"
-        cp -r "$APP_PATH" Payload/
-        zip -r GalaxyBudsClient_iOS_TrollStore.ipa Payload
+        # 寻找系统生成的 IPA，如果不存在则手动打包
+        IPA_PATH=$(find ./GalaxyBudsClient.iOS/bin -name "*.ipa" -type f | head -n 1)
+        if [ -f "$IPA_PATH" ]; then
+          echo "Using system generated IPA: $IPA_PATH"
+          cp "$IPA_PATH" GalaxyBudsClient_iOS_TrollStore.ipa
+        else
+          echo "System IPA not found, manual packaging..."
+          mkdir -p Payload
+          APP_PATH=$(find ./GalaxyBudsClient.iOS/bin -name "*.app" -type d | head -n 1)
+          cp -r "$APP_PATH" Payload/
+          zip -r GalaxyBudsClient_iOS_TrollStore.ipa Payload
+        fi
         
     - name: Upload IPA artifact
 #       GitHub Actions runner currently doesn't easily support v6 for everything, using v4 for compatibility if needed, but v6 is latest
