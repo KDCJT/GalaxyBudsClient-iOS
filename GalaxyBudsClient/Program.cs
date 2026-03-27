@@ -41,6 +41,7 @@ public static class Program
     internal static long StartedAt;
     public static readonly string AvaresUrl = "avares://" + typeof(Program).Assembly.GetName().Name;
 
+#if !Android && !iOS
     public static void Startup(bool cliMode, ILogEventSink? additionalLogSink = null)
     {
         StartedAt = Stopwatch.GetTimestamp();
@@ -99,10 +100,12 @@ public static class Program
         
         LegacySettings.BeginMigration();
     }
+#endif
     
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
+#if !Android && !iOS
     public static void Main(string[] args)
     {
         var cliMode = args.Length > 0 && !args.Contains("/StartMinimized");
@@ -139,21 +142,22 @@ public static class Program
 #endif
         }
     } 
+#endif
 
     // Avalonia configuration, don't remove; also used by visual designer.
     private static AppBuilder BuildAvaloniaApp()
     {
         var builder = AppBuilder.Configure<App>()
-            .UsePlatformDetect()
             .LogToTrace()
             .WithInterFont();
 
 #if !Android && !iOS
-        builder = builder.With(new MacOSPlatformOptions
-        {
-            // https://github.com/AvaloniaUI/Avalonia/issues/14577
-            DisableSetProcessName = true
-        });
+        builder = builder.UsePlatformDetect()
+            .With(new MacOSPlatformOptions
+            {
+                // https://github.com/AvaloniaUI/Avalonia/issues/14577
+                DisableSetProcessName = true
+            });
 #endif
 
         return builder;
