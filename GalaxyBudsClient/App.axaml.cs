@@ -53,7 +53,17 @@ public class App : Application
             defaultBindingMode: BindingMode.OneWay, defaultValue: []);
     public NativeMenu TrayMenu => GetValue(TrayMenuProperty);
     
-#if !Android
+    public App()
+    {
+        try
+        {
+            var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: App instance constructor hit.\n");
+        }
+        catch { }
+    }
+
+#if !Android && !iOS
     private readonly ExperimentManager _experimentManager = new();
 #endif
     
