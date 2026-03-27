@@ -22,7 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../GalaxyBudsClient/GalaxyBudsClient.csproj" />
+    <ProjectReference Include="../GalaxyBudsClient/GalaxyBudsClient.csproj">
+      <AdditionalProperties>IsiOS=true</AdditionalProperties>
+    </ProjectReference>
     <ProjectReference Include="../GalaxyBudsClient.Platform.iOS/GalaxyBudsClient.Platform.iOS.csproj" />
   </ItemGroup>
 </Project>
