@@ -16,8 +16,6 @@ public class BluetoothService : IBluetoothService
 {
     private EAAccessory? _accessory;
     private EASession? _session;
-    private Stream? _inputStream;
-    private Stream? _outputStream;
     private CancellationTokenSource? _readCts;
 
     public event EventHandler<BluetoothException>? BluetoothErrorAsync;
@@ -27,7 +25,7 @@ public class BluetoothService : IBluetoothService
     public event EventHandler<string>? Disconnected;
     public event EventHandler<byte[]>? NewDataAvailable;
 
-    public bool IsStreamConnected => _session != null && _inputStream != null && _outputStream != null;
+    public bool IsStreamConnected => _session != null && _session.InputStream != null && _session.OutputStream != null;
 
     // Known Samsung Galaxy Buds protocol strings
     private static readonly string[] ProtocolStrings = 
@@ -75,22 +73,18 @@ public class BluetoothService : IBluetoothService
             string? protocol = _accessory.ProtocolStrings.Intersect(ProtocolStrings).FirstOrDefault();
             if (protocol == null)
             {
-                // Fallback to first if none match, or use default
                 protocol = _accessory.ProtocolStrings.FirstOrDefault() ?? ProtocolStrings[0];
                 Log.Warning("iOS.BluetoothService: No known protocol string found. Attempting with: {Protocol}", protocol);
             }
 
             _session = new EASession(_accessory, protocol);
-            if (_session == null)
+            if (_session == null || _session.InputStream == null || _session.OutputStream == null)
             {
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed, "无法建立 EASession。");
             }
 
-            _inputStream = _session.InputStream.AsStream();
-            _outputStream = _session.OutputStream.AsStream();
-
-            _session.InputStream.Schedule(NSRunLoop.Main, NSRunLoop.NSDefaultRunLoopMode);
-            _session.OutputStream.Schedule(NSRunLoop.Main, NSRunLoop.NSDefaultRunLoopMode);
+            _session.InputStream.Schedule(NSRunLoop.Main, NSRunLoopMode.Default);
+            _session.OutputStream.Schedule(NSRunLoop.Main, NSRunLoopMode.Default);
 
             _session.InputStream.Open();
             _session.OutputStream.Open();
@@ -114,19 +108,29 @@ public class BluetoothService : IBluetoothService
         var buffer = new byte[1024];
         try
         {
-            while (!token.IsCancellationRequested && _inputStream != null)
+            while (!token.IsCancellationRequested && _session?.InputStream != null)
             {
-                int bytesRead = await _inputStream.ReadAsync(buffer, 0, buffer.Length, token);
-                if (bytesRead > 0)
+                if (_session.InputStream.HasBytesAvailable)
                 {
-                    var data = new byte[bytesRead];
-                    Array.Copy(buffer, 0, data, 0, bytesRead);
-                    NewDataAvailable?.Invoke(this, data);
+                    unsafe
+                    {
+                        fixed (byte* pBuffer = buffer)
+                        {
+                            nint bytesRead = _session.InputStream.Read((IntPtr)pBuffer, (nuint)buffer.Length);
+                            if (bytesRead > 0)
+                            {
+                                var data = new byte[bytesRead];
+                                Array.Copy(buffer, 0, data, 0, bytesRead);
+                                NewDataAvailable?.Invoke(this, data);
+                            }
+                            else if (bytesRead == 0)
+                            {
+                                break; 
+                            }
+                        }
+                    }
                 }
-                else if (bytesRead == 0)
-                {
-                    break; // EOF
-                }
+                await Task.Delay(10, token); // Small delay to prevent tight loop if no data
             }
         }
         catch (Exception ex)
@@ -143,27 +147,30 @@ public class BluetoothService : IBluetoothService
     {
         _readCts?.Cancel();
         
-        _inputStream?.Close();
-        _outputStream?.Close();
-        
-        _session?.InputStream.Close();
-        _session?.OutputStream.Close();
-        _session?.Dispose();
-        
-        _session = null;
-        _inputStream = null;
-        _outputStream = null;
+        if (_session != null)
+        {
+            _session.InputStream?.Close();
+            _session.OutputStream?.Close();
+            _session.Dispose();
+            _session = null;
+        }
 
         Disconnected?.Invoke(this, "已断开连接");
         return Task.CompletedTask;
     }
 
-    public async Task SendAsync(byte[] data)
+    public Task SendAsync(byte[] data)
     {
-        if (_outputStream != null)
+        if (_session?.OutputStream != null && data.Length > 0)
         {
-            await _outputStream.WriteAsync(data, 0, data.Length);
-            await _outputStream.FlushAsync();
+            unsafe
+            {
+                fixed (byte* pData = data)
+                {
+                    _session.OutputStream.Write((IntPtr)pData, (nuint)data.Length);
+                }
+            }
         }
+        return Task.CompletedTask;
     }
 }
