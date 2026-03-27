@@ -42,4 +42,22 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         
         return result;
     }
+
+    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+    {
+        var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+        try
+        {
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FinishedLaunching - calling Avalonia base...\n");
+            var result = base.FinishedLaunching(application, launchOptions);
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FinishedLaunching base returned: {result}\n");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FATAL in FinishedLaunching: {ex}\n");
+            // Don't rethrow - return false so we get the log instead of a silent crash
+            return false;
+        }
+    }
 }
