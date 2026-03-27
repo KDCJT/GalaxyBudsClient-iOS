@@ -10,54 +10,54 @@ namespace GalaxyBudsClient.iOS;
 [Register("AppDelegate")]
 public class AppDelegate : AvaloniaAppDelegate<App>
 {
+    private static readonly string LogPath = System.IO.Path.Combine(
+        System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments),
+        "Logs", "boot.log");
+
     public AppDelegate()
     {
         try
         {
-            var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: AppDelegate constructor hit.\n");
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: AppDelegate constructor hit.\n");
+
+            // Catch any unhandled managed exception (covers Avalonia internal init crashes)
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                try { System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: AppDomain UnhandledException: {e.ExceptionObject}\n"); } catch { }
+            };
+
+            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: UnobservedTaskException: {e.Exception}\n");
+                    e.SetObserved();
+                }
+                catch { }
+            };
         }
         catch { }
     }
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
         try
         {
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Injecting Platform Backend...\n");
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Injecting Platform Backend...\n");
             GalaxyBudsClient.Platform.PlatformImpl.InjectExternalBackend(new GalaxyBudsClient.Platform.iOS.iOSPlatformImplCreator());
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Platform Backend Injected.\n");
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Platform Backend Injected.\n");
         }
         catch (Exception ex)
         {
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: ERROR during backend injection: {ex}\n");
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR during backend injection: {ex}\n");
         }
 
-        System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Calling base.CustomizeAppBuilder...\n");
+        System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Calling base.CustomizeAppBuilder...\n");
         var result = base.CustomizeAppBuilder(builder)
             .WithInterFont()
             .UseReactiveUI();
-        System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: base.CustomizeAppBuilder returned.\n");
-        
-        return result;
-    }
+        System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: base.CustomizeAppBuilder returned.\n");
 
-    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
-    {
-        var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
-        try
-        {
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FinishedLaunching - calling Avalonia base...\n");
-            var result = base.FinishedLaunching(application, launchOptions);
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FinishedLaunching base returned: {result}\n");
-            return result;
-        }
-        catch (Exception ex)
-        {
-            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: FATAL in FinishedLaunching: {ex}\n");
-            // Don't rethrow - return false so we get the log instead of a silent crash
-            return false;
-        }
+        return result;
     }
 }
