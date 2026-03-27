@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -141,14 +141,21 @@ public static class Program
     } 
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    private static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
-            .With(new MacOSPlatformOptions
-            {
-                // https://github.com/AvaloniaUI/Avalonia/issues/14577
-                DisableSetProcessName = true
-            })
+    private static AppBuilder BuildAvaloniaApp()
+    {
+        var builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace()
             .WithInterFont();
+
+#if !Android && !iOS
+        builder = builder.With(new MacOSPlatformOptions
+        {
+            // https://github.com/AvaloniaUI/Avalonia/issues/14577
+            DisableSetProcessName = true
+        });
+#endif
+
+        return builder;
+    }
 }
