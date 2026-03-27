@@ -18,7 +18,8 @@ namespace GalaxyBudsClient.Utils.Interface;
 
 public static class WindowIconRenderer
 {
-    private static readonly WindowIcon DefaultIcon = MakeDefaultIcon();
+    private static WindowIcon? _defaultIcon;
+    private static WindowIcon? DefaultIcon => _defaultIcon ??= PlatformUtils.IsDesktop ? MakeDefaultIcon() : null;
 
     public static void UpdateDynamicIcon(IBasicStatusUpdate status)
     {
@@ -42,7 +43,7 @@ public static class WindowIconRenderer
             _ => null
         };
 
-        if (level != null)
+        if (level != null && PlatformUtils.IsDesktop)
         {
             Dispatcher.UIThread.Post(() => { trayIcons[0].Icon = MakeFromBatteryLevel(Math.Min(level.Value, 99)); });
         }
@@ -56,7 +57,11 @@ public static class WindowIconRenderer
             if (trayIcons == null)
                 return;
 
-            trayIcons[0].Icon = DefaultIcon;
+            var icon = DefaultIcon;
+            if (icon != null)
+            {
+                trayIcons[0].Icon = icon;
+            }
         });
     }
 
