@@ -19,14 +19,19 @@ public class Program
 
     static void Main(string[] args)
     {
+        var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
         try
         {
-            UIApplication.Main(args, null, typeof(AppDelegate));
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: Calling UIApplication.Main with delegate: AppDelegate\n");
+            
+            // 使用显式字符串名称通常比 typeof 更能解决 Native 回调问题
+            UIApplication.Main(args, null, "AppDelegate");
+            
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: UIApplication.Main returned (unexpectedly)\n");
         }
         catch (Exception ex)
         {
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "crash.log");
-            File.WriteAllText(path, ex.ToString());
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: CRITICAL EXCEPTION IN MAIN: {ex}\n");
             throw;
         }
     }
