@@ -26,7 +26,7 @@ jobs:
       run: dotnet workload restore
 
     - name: Restore dependencies
-      run: dotnet restore GalaxyBudsClient.iOS/GalaxyBudsClient.iOS.csproj --configfile GalaxyBudsClient/nuget.config
+      run: dotnet restore GalaxyBudsClient.iOS/GalaxyBudsClient.iOS.csproj --configfile GalaxyBudsClient/nuget.config -p:IsiOS=true
 
     - name: Publish iOS App
       run: |
@@ -36,6 +36,7 @@ jobs:
           -r ios-arm64 \
           --no-restore \
           --self-contained \
+          -p:IsiOS=true \
           /p:BuildIpa=true \
           /p:CodesignKey="" \
           /p:CodesignProvision=""
