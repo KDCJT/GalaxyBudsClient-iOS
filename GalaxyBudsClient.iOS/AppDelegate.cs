@@ -21,10 +21,24 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        GalaxyBudsClient.Platform.PlatformImpl.InjectExternalBackend(new GalaxyBudsClient.Platform.iOS.iOSPlatformImplCreator());
+        var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+        try
+        {
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Injecting Platform Backend...\n");
+            GalaxyBudsClient.Platform.PlatformImpl.InjectExternalBackend(new GalaxyBudsClient.Platform.iOS.iOSPlatformImplCreator());
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Platform Backend Injected.\n");
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: ERROR during backend injection: {ex}\n");
+        }
 
-        return base.CustomizeAppBuilder(builder)
+        System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: Calling base.CustomizeAppBuilder...\n");
+        var result = base.CustomizeAppBuilder(builder)
             .WithInterFont()
             .UseReactiveUI();
+        System.IO.File.AppendAllText(logPath, $"[BOOT] {System.DateTime.Now}: base.CustomizeAppBuilder returned.\n");
+        
+        return result;
     }
 }

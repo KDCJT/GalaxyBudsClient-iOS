@@ -105,6 +105,13 @@ public class App : Application
     
     public override void OnFrameworkInitializationCompleted()
     {
+        try
+        {
+            var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: OnFrameworkInitializationCompleted started.\n");
+        }
+        catch { }
+
         if (BluetoothImpl.HasValidDevice)
         {
             Task.Run(() => BluetoothImpl.Instance.ConnectAsync());
@@ -150,6 +157,13 @@ public class App : Application
         }
             
         base.OnFrameworkInitializationCompleted();
+
+        try
+        {
+            var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: OnFrameworkInitializationCompleted finished.\n");
+        }
+        catch { }
     }
     
     private async void OnEventReceived(Event e, object? arg)
