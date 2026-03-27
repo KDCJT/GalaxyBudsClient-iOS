@@ -15,6 +15,7 @@
   <ItemGroup>
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
+    <LinkDescription Include="linker.xml" />
   </ItemGroup>
 
   <ItemGroup>

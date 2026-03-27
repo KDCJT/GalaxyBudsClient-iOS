@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This file tells the iOS linker to preserve all types in the ReactiveUI/Splat dependency chain.
+  Without this, Splat.IMutableDependencyResolver gets stripped at link time and causes
+  a TypeLoadException at runtime when UseReactiveUI() tries to initialize.
+-->
+<linker>
+  <assembly fullname="Splat" preserve="all" />
+  <assembly fullname="ReactiveUI" preserve="all" />
+  <assembly fullname="ReactiveUI.Fody.Helpers" preserve="all" />
+  <assembly fullname="DynamicData" preserve="all" />
+  <assembly fullname="ReactiveUI.Avalonia" preserve="all" />
+  <assembly fullname="Avalonia.ReactiveUI" preserve="all" />
+</linker>
