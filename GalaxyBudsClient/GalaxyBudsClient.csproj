@@ -100,6 +100,7 @@
         <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" Condition="'$(IsiOS)'!='true'" />
         <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="SkiaSharp.NativeAssets.iOS" Version="3.119.1" />
         <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
         <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
@@ -129,7 +130,9 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="Serilog.Sinks.Trace" Version="4.0.0" />
         <!-- Workaround: force include SkiaSharp 3.x libraries for Linux; this is already implicitly the case for other platforms -->
-        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" Condition="'$(IsLinux)'=='true'" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" Condition="'$(IsWindows)'=='true'" />
+        <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.119.1" Condition="'$(IsOSX)'=='true'" />
         <PackageReference Include="Tmds.DBus" Version="0.21.2" />
     </ItemGroup>
 

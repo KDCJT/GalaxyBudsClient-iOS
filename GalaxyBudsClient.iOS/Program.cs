@@ -6,6 +6,17 @@ namespace GalaxyBudsClient.iOS;
 
 public class Program
 {
+    static Program()
+    {
+        try
+        {
+            var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs");
+            if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
+            File.AppendAllText(Path.Combine(logDir, "boot.log"), $"[BOOT] {DateTime.Now}: Program class static constructor hit.\n");
+        }
+        catch { /* Ignore logging error */ }
+    }
+
     static void Main(string[] args)
     {
         try
