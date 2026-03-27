@@ -38,6 +38,8 @@ jobs:
           --self-contained \
           -p:IsiOS=true \
           /p:BuildIpa=false \
+          /p:EnableCodeSigning=false \
+          /p:_SkipCodeSignature=true \
           /p:CodesignKey="" \
           /p:CodesignProvision=""
 
