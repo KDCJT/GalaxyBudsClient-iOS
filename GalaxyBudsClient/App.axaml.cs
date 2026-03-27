@@ -63,6 +63,13 @@ public class App : Application
     
     public override void Initialize()
     {
+        try
+        {
+            var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Logs", "boot.log");
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: App.Initialize started.\n");
+        }
+        catch { }
+
         DataContext = this;
             
 #if OSX
