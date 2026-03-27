@@ -1,0 +1,51 @@
+name: Compile iOS IPA (TrollStore)
+
+on:
+  push:
+    branches: [ master, NET10 ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-26
+    
+    steps:
+    - uses: actions/checkout@v6
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: global.json
+
+    - name: Install iOS Workload
+      run: dotnet workload install ios
+
+    - name: Restore dependencies
+      run: dotnet restore GalaxyBudsClient.iOS/GalaxyBudsClient.iOS.csproj --configfile GalaxyBudsClient/nuget.config
+
+    - name: Publish iOS App
+      run: |
+        dotnet publish GalaxyBudsClient.iOS/GalaxyBudsClient.iOS.csproj \
+          -f net10.0-ios \
+          -c Release \
+          -r ios-arm64 \
+          --no-restore \
+          --self-contained \
+          /p:BuildIpa=true \
+          /p:CodesignKey="" \
+          /p:CodesignProvision=""
+
+    - name: Prepare IPA for Upload
+      run: |
+        mkdir -p Payload
+        cp -r GalaxyBudsClient.iOS/bin/Release/net10.0-ios/ios-arm64/publish/GalaxyBudsClient.iOS.app Payload/
+        zip -r GalaxyBudsClient_iOS_TrollStore.ipa Payload
+        
+    - name: Upload IPA artifact
+#       GitHub Actions runner currently doesn't easily support v6 for everything, using v4 for compatibility if needed, but v6 is latest
+      uses: actions/upload-artifact@v6
+      with:
+        name: GalaxyBudsClient_iOS_IPA
+        path: GalaxyBudsClient_iOS_TrollStore.ipa

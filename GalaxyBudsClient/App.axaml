@@ -1,0 +1,76 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
+             xmlns:galaxyBudsClient="clr-namespace:GalaxyBudsClient"
+             xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             x:Class="GalaxyBudsClient.App"
+             Name="Galaxy Buds Manager">
+
+    <Design.DataContext>
+        <galaxyBudsClient:App />
+    </Design.DataContext>
+
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <!-- eternal emptiness -->
+        </NativeMenu>
+    </NativeMenu.Menu>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Fallback language -->
+                <ResourceInclude Source="/i18n/en.axaml" />
+                <!-- User language -->
+                <ResourceInclude Source="/i18n/en.axaml" />
+                <!-- Resources -->
+                <ResourceInclude Source="/Interface/Styling/Resources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Color x:Key="AccentColor">Orange</Color>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <styling:FluentAvaloniaTheme PreferSystemTheme="True" CustomAccentColor="Orange" />
+        <StyleInclude Source="/Interface/Styling/AppStyles.axaml" />
+        
+        <OnPlatform>
+            <OnPlatform.Default>
+                <StyleInclude Source="/Interface/Styling/Overrides/DefaultOverrides.axaml" />
+            </OnPlatform.Default>
+            <OnPlatform.macOS>
+                <StyleInclude Source="/Interface/Styling/Overrides/OsxOverrides.axaml" />
+            </OnPlatform.macOS>
+        </OnPlatform>
+        
+        <Style Selector="Button#CloseButton:inactive:not(:pointerover) controls|FontIcon">
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        </Style>
+
+        <Style Selector="Button#MinimizeButton:pointerover Border">
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        </Style>
+        
+        <Style Selector="Button#MinimizeButton:inactive:not(:pointerover) controls|FontIcon">
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        </Style>
+        
+        <Style Selector="Button#MaxRestoreButton:pointerover Border">
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        </Style>
+        
+        <Style Selector="Button#MaxRestoreButton:inactive:not(:pointerover) controls|FontIcon">
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        </Style>
+    </Application.Styles>
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Menu="{Binding TrayMenu, DataType=galaxyBudsClient:App}"
+                      Icon="{OnPlatform '/Resources/icon_white_outlined_multi_tray.ico', Windows='/Resources/icon_white_outlined_single_tray.ico', macOS='/Resources/icon_black_tray.ico'}"
+                      MacOSProperties.IsTemplateIcon="true"
+                      ToolTipText="Galaxy Buds"
+                      Clicked="TrayIcon_OnClicked" />
+        </TrayIcons>
+    </TrayIcon.Icons>
+</Application>

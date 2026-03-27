@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.FindMyBudsPage"
+             x:DataType="pages:FindMyBudsPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:FindMyBudsPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+            </Interaction.Behaviors>
+            
+            <Border Classes="Card" ClipToBounds="True">
+
+                <controls:EarbudControlUnit ButtonText="{ext:Translate {x:Static i18N:Keys.FmgHeader}}"
+                                            WarningText="{Binding WarningText}"
+                                            IsChecked="{Binding IsSearching}">
+                    <controls:EarbudControlUnit.LeftContent>
+                        <controls:MuteToggleButton IsChecked="{Binding IsLeftMuted}"
+                                                   IsVisible="{Binding IsSearching}" />
+                    </controls:EarbudControlUnit.LeftContent>
+
+                    <controls:EarbudControlUnit.RightContent>
+                        <controls:MuteToggleButton IsChecked="{Binding IsRightMuted}"
+                                                   IsVisible="{Binding IsSearching}" />
+                    </controls:EarbudControlUnit.RightContent>
+                </controls:EarbudControlUnit>
+            </Border>
+            
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="SmartThingsFind" />
+                </Interaction.Behaviors>
+                
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.FmgSmartThingsFindManage}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.FmgSmartThingsFindManageDesc}}"
+                                             Symbol="Tag"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True"
+                                             Click="OnSmartThingsFindDataClicked" />
+                
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.FmgSmartThingsFindOpen}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.FmgSmartThingsFindOpenDesc}}"
+                                             Symbol="GlobeSearch"
+                                             ActionIconSource="Open"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <EventTriggerBehavior EventName="Click">
+                            <ext:OpenLinkAction TargetUri="https://smartthingsfind.samsung.com" />
+                        </EventTriggerBehavior>
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+                
+            </controls:SettingsGroup>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

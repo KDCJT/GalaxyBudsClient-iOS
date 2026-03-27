@@ -1,0 +1,12 @@
+﻿<UserControl x:Class="GalaxyBudsClient.Interface.Controls.EarbudIconUnit"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls">
+
+    <StackPanel Spacing="15"
+                Orientation="Horizontal"
+                HorizontalAlignment="Center">
+        <controls:EarbudIcon Side="L" />
+        <controls:EarbudIcon Side="R" />
+    </StackPanel>
+</UserControl>

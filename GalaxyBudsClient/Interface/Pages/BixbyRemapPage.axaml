@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             xmlns:config="clr-namespace:GalaxyBudsClient.Model.Config"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.BixbyRemapPage"
+             x:DataType="pages:BixbyRemapPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:BixbyRemapPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+            </Interaction.Behaviors>
+            
+            <controls:SettingsGroup>
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.BixbyRemapEnable}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.BixbyRemapEnableDesc}}"
+                                             IsChecked="{Binding IsBixbyWakeUpEnabled}"
+                                             Symbol="MicPulse"
+                                             IsClickEnabled="True" />
+
+                <controls:SettingsComboBoxItem
+                    Content="{ext:Translate {x:Static i18N:Keys.BixbyRemapLang}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.BixbyRemapLangDesc}}"
+                    Symbol="LocalLanguage"
+                    IsEnabled="{Binding IsBixbyWakeUpEnabled}"
+                    ItemsSource="{Binding Source={ext:BixbyLanguagesBindingSource}}"
+                    SelectedValue="{Binding BixbyLanguage}" />
+
+                <controls:SettingsComboBoxItem
+                    Content="{ext:Translate {x:Static i18N:Keys.BixbyRemapAction}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.BixbyRemapActionDesc}}"
+                    Symbol="Flash"
+                    IsEnabled="{Binding IsBixbyWakeUpEnabled}"
+                    ItemsSource="{Binding Source={ext:EventBindingSource}}"
+                    SelectedValue="{Binding BixbyRemapEvent, Source={x:Static config:Settings.Data}}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareComboBoxBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsComboBoxItem>
+            </controls:SettingsGroup>
+
+            <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.Hint}}"
+                                    IsOpen="True"
+                                    IsClosable="False"
+                                    Severity="Informational"
+                                    Message="{ext:Translate {x:Static i18N:Keys.BixbyRemapNote}}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

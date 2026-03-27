@@ -1,0 +1,48 @@
+﻿<UserControl x:Class="GalaxyBudsClient.Interface.Controls.EarbudControlUnit"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+             ClipToBounds="False"
+             x:DataType="controls:EarbudControlUnit">
+
+    <Design.DataContext>
+        <controls:EarbudControlUnit />
+    </Design.DataContext>
+
+    <Grid Margin="0,15, 0, 30"
+          ClipToBounds="False"
+          RowDefinitions="Auto,15,Auto,30,Auto">
+        
+        <Grid Grid.Row="0"
+              Name="WarningContainer"
+              Margin="10,0"
+              HorizontalAlignment="Center"
+              ColumnDefinitions="Auto,5,Auto">
+
+            <ic:SymbolIcon Grid.Column="0" Symbol="Warning" />
+            <Label Grid.Column="2"
+                   Name="WarningLabel" />
+        </Grid>
+
+        <StackPanel Grid.Row="2"
+                    Spacing="15"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+
+            <ContentControl Name="LeftContentControl"
+                            HorizontalContentAlignment="Stretch" />
+
+            <controls:EarbudIconUnit />
+
+            <ContentControl Name="RightContentControl"
+                            HorizontalContentAlignment="Stretch" />
+        </StackPanel>
+
+        <Grid Grid.Row="4"
+              ClipToBounds="False">
+            <controls:GlowingToggleButton Name="ToggleButton" />
+        </Grid>
+    </Grid>
+
+</UserControl>

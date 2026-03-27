@@ -1,0 +1,77 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+        mc:Ignorable="d"
+        x:Class="GalaxyBudsClient.Interface.Dialogs.BudsPopup"
+        Height="205" 
+        Width="330"
+        MaxWidth="330"
+        CanResize="False"
+        WindowStartupLocation="Manual"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        TransparencyLevelHint="Transparent"
+        SystemDecorations="None"
+        Background="Transparent"
+        UseLayoutRounding="True"
+        Icon="/Resources/icon.ico"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ShowActivated="False"
+        Focusable="False"
+        Title="Galaxy Buds Manager (Popup)"
+        PointerPressed="Window_OnPointerPressed">
+
+    <Border Name="OuterBorder"
+            BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}"
+            BorderThickness="1"
+            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+            CornerRadius="{StaticResource OverlayCornerRadius}">
+        <Border.Styles>
+            <Style Selector="Border[Tag=showing]">
+                <Style.Animations>
+                    <Animation IterationCount="1"
+                               PlaybackDirection="Normal"
+                               FillMode="Both"
+                               Duration="0:0:.4">
+                        <KeyFrame Cue="0%">
+                            <Setter Property="Opacity" Value="0.0" />
+                        </KeyFrame>
+                        <KeyFrame Cue="100%">
+                            <Setter Property="Opacity" Value="1.0" />
+                        </KeyFrame>
+                    </Animation>
+                </Style.Animations>
+            </Style>
+            <Style Selector="Border[Tag=hiding]">
+                <Style.Animations>
+                    <Animation IterationCount="1"
+                               PlaybackDirection="Normal"
+                               FillMode="Both"
+                               Duration="0:0:.4">
+                        <KeyFrame Cue="0%">
+                            <Setter Property="Opacity" Value="1.0" />
+                        </KeyFrame>
+                        <KeyFrame Cue="100%">
+                            <Setter Property="Opacity" Value="0.0" />
+                        </KeyFrame>
+                    </Animation>
+                </Style.Animations>
+            </Style>
+        </Border.Styles>
+
+        <Grid Name="Grid" 
+              RowDefinitions="35,*"
+              Margin="20,16">
+            <Label Grid.Row="0"
+                   Name="Header"
+                   Margin="0,0,0,-8"
+                   Content="Blank's Galaxy Buds"
+                   FontSize="18" />
+            
+            <controls:EarbudCompactStatusUnit Grid.Row="1" />
+        </Grid>
+    </Border>
+</Window>

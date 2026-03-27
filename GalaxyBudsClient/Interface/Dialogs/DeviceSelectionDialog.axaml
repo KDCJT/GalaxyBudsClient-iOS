@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:dialogs="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Dialogs"
+             xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:input="clr-namespace:FluentAvalonia.UI.Input;assembly=FluentAvalonia"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             xmlns:config="clr-namespace:GalaxyBudsClient.Model.Config"
+             xmlns:model="clr-namespace:GalaxyBudsClient.Platform.Model;assembly=GalaxyBudsClient.Platform"
+             mc:Ignorable="d"
+             Padding="0, 5, 0, 0"
+             x:CompileBindings="True"
+             x:DataType="dialogs:DeviceSelectionDialogViewModel"
+             x:Class="GalaxyBudsClient.Interface.Dialogs.DeviceSelectionDialog">
+
+    <Design.DataContext>
+        <dialogs:DeviceSelectionDialogViewModel />
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <input:XamlUICommand x:Key="ConnectCommand"
+                             Label="{ext:Translate connlost_connect}"
+                             IconSource="{StaticResource LinkMultipleIcon}"
+                             Description="{ext:Translate connlost_connect}"
+                             Command="{Binding DoConnectCommand}" />
+    </UserControl.Resources>
+
+    <StackPanel MinWidth="400" Spacing="16">
+        <Border Classes="Card">
+            <Grid RowDefinitions="*">
+                <ListBox ItemsSource="{Binding Devices}"
+                         IsVisible="{Binding !NoDevices}"
+                         Name="DevList">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="model:BluetoothDevice">
+                            <Border Background="Transparent" PointerPressed="OnListItemPressed">
+                                <Panel>
+                                    <StackPanel Spacing="4" Margin="4 10" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"
+                                                   Classes="BaseTextBlockStyle"
+                                                   VerticalAlignment="Bottom"
+                                                   HorizontalAlignment="Left"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <TextBlock Text="{Binding Address}"
+                                                   Classes="CaptionTextBlockStyle"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   VerticalAlignment="Top"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right">
+                                        <ui:CommandBarButton HorizontalAlignment="Right"
+                                                             Command="{StaticResource ConnectCommand}"
+                                                             CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=DataContext}"
+                                                             HotKey="{x:Null}" />
+                                    </StackPanel>
+                                </Panel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <controls:EmptyView Margin="12,24"
+                                    IsVisible="{Binding NoDevices}"
+                                    Text="{ext:Translate {x:Static i18N:Keys.DevselNodevicesTitle}}"
+                                    Symbol="Bluetooth" />
+            </Grid>
+        </Border>
+
+        <controls:SettingsGroup IsVisible="{Binding CanUseAlternativeBackend}">
+            <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.DevselWinrtTitle}}"
+                                         Description="{ext:Translate {x:Static i18N:Keys.DevselWinrt}}"
+                                         IsChecked="{Binding UseBluetoothWinRt, Source={x:Static config:Settings.Data}}"
+                                         IsCheckedChanged="OnUseWinRtCheckedChanged" />
+        </controls:SettingsGroup>
+
+        <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.DevselManualPairTitle}}"
+                                Message="{ext:Translate {x:Static i18N:Keys.DevselManualPairDescription}}"
+                                IsOpen="True"
+                                IsClosable="False"
+                                Severity="Informational">
+            <controls:CustomInfoBar.ActionButton>
+                <StackPanel Spacing="8" 
+                            Orientation="Horizontal">
+                    <Button Content="{ext:Translate {x:Static i18N:Keys.DevselManualPair}}"
+                            HorizontalAlignment="Right"
+                            Click="OnManualConnectClicked" />
+                    <Button Content="{ext:Translate {x:Static i18N:Keys.FwSelectRefresh}}"
+                            HorizontalAlignment="Right"
+                            Command="{Binding DoRefreshCommand}" />
+                </StackPanel>
+            </controls:CustomInfoBar.ActionButton>
+        </controls:CustomInfoBar>
+    </StackPanel>
+</UserControl>

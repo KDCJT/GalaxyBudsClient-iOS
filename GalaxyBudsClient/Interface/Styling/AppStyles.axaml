@@ -1,0 +1,58 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls">
+
+    <StyleInclude Source="NavigationViewStyles.axaml" />
+    <StyleInclude Source="SettingsGroupStyles.axaml" />
+
+    <!-- Workaround: large BreadcrumbBar font clips in FluentAvaloniaUI 2.4.x -->
+    <Style Selector="ui|BreadcrumbBarItem">
+        <Setter Property="Height" Value="NaN" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="ClipToBounds" Value="False" />
+    </Style>
+    <Style Selector="ui|BreadcrumbBarItem /template/ TextBlock#TextLabel">
+        <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="ui|BreadcrumbBarItem /template/ TextBlock">
+        <Setter Property="LineHeight" Value="30" />
+    </Style>
+    <Style Selector="ui|BreadcrumbBarItem:ellipsis">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="ui|BreadcrumbBarItem:ellipsisDropDown">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!-- Cards -->
+    <Style Selector="Border.Card">
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+    </Style>
+
+    <!-- GroupBoxes -->
+    <Style Selector="HeaderedContentControl.GroupBox">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Grid RowDefinitions="Auto,*" ColumnDefinitions="Auto,*">
+                        <Border ZIndex="1" Padding="5,0,5,0"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}" Margin="8,0,0,0"
+                                CornerRadius="{StaticResource ControlCornerRadius}" Opacity="1">
+                            <TextBlock FontWeight="Bold" Text="{TemplateBinding Header}" />
+                        </Border>
+                        <Border Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2" Grid.Column="0" Margin="0,10,0,0"
+                                BorderBrush="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                Opacity="1"
+                                BorderThickness="2"
+                                CornerRadius="{StaticResource ControlCornerRadius}">
+                            <ContentPresenter Margin="15" Content="{TemplateBinding Content}" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</Styles>

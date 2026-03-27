@@ -1,0 +1,149 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             xmlns:config="clr-namespace:GalaxyBudsClient.Model.Config"
+             xmlns:platform="clr-namespace:GalaxyBudsClient.Platform;assembly=GalaxyBudsClient.Platform"
+             xmlns:icons="clr-namespace:FluentIcons.Common;assembly=FluentIcons.Common"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.AdvancedPage"
+             x:DataType="pages:AdvancedPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:AdvancedPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresConnectedDeviceBehavior />
+                </Interaction.Behaviors>
+                
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvResumePlayback}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvResumePlaybackDesc}}"
+                                             IsChecked="{Binding ResumePlaybackOnSensor, Source={x:Static config:Settings.Data}}"
+                                             Symbol="FlashPlay"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresDesktopBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvPausePlayback}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvPausePlaybackDesc}}"
+                                             IsChecked="{Binding PausePlaybackOnSensor, Source={x:Static config:Settings.Data}}"
+                                             Symbol="{x:Static icons:Symbol.Pause}"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresDesktopBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvSeamless}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvSeamlessDesc}}"
+                                             IsChecked="{Binding IsSeamlessConnectionEnabled}"
+                                             Symbol="PlugDisconnected"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="SeamlessConnection" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvPassthrough}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvPassthroughDesc}}"
+                                             IsChecked="{Binding IsPassthroughEnabled}"
+                                             Symbol="AddSubtractCircle"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="AmbientPassthrough" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvSidetone}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvSidetoneDesc}}"
+                                             IsChecked="{Binding IsSidetoneEnabled}"
+                                             Symbol="CallConnecting"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="AmbientSidetone" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+                
+                
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvCallpath}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvCallpathDesc}}"
+                                             IsChecked="{Binding IsCallpathControlEnabled}"
+                                             Symbol="CallTransfer"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="CallPathControl" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+                
+                    
+                <controls:SettingsSwitchItem Content="{ext:Translate {x:Static i18N:Keys.AdvExtraClearCall}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvExtraClearCallDesc}}"
+                                             IsChecked="{Binding IsExtraClearCallEnabled}"
+                                             Symbol="SoundWaveCircle"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="ExtraClearCallSound" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <controls:SettingsSymbolItem Name="Hotkey"
+                                             Content="{ext:Translate {x:Static i18N:Keys.AdvHotkey}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvHotkeyDesc}}"
+                                             IsVisible="{x:Static platform:PlatformUtils.SupportsHotkeys}"
+                                             Symbol="Keyboard"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True" />
+
+                <controls:SettingsSymbolItem Name="BixbyRemap"
+                                             Content="{ext:Translate {x:Static i18N:Keys.AdvBixbyRemap}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.AdvBixbyRemapDesc}}"
+                                             Symbol="MicPulse"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureAndDesktopBehavior Feature="BixbyWakeup" />
+                        <ext:RequiresConnectedDeviceBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Name="FitTest"
+                                             Content="{ext:Translate {x:Static i18N:Keys.MainpageFitTest}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.GftDesc}}"
+                                             Symbol="TextBulletListCheckmark"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="GearFitTest" />
+                        <ext:RequiresConnectedDeviceBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Name="Rename"
+                                             Content="{ext:Translate {x:Static i18N:Keys.Rename}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.RenameDesc}}"
+                                             Symbol="Rename"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="Rename" />
+                        <ext:RequiresConnectedDeviceBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+            </controls:SettingsGroup>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

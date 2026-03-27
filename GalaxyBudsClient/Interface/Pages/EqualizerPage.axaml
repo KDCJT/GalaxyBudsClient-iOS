@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.EqualizerPage"
+             x:DataType="pages:EqualizerPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:EqualizerPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+            </Interaction.Behaviors>
+            
+            <controls:SettingsGroup>
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.EqEnable}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.EqEnableDescription}}"
+                    Symbol="DeviceEq"
+                    IsChecked="{Binding IsEqEnabled}" />
+
+                <controls:SettingsSliderItem
+                    Name="EqPreset"
+                    Content="{ext:Translate {x:Static i18N:Keys.EqPreset}}"
+                    Description="{Binding EqPreset, Converter={StaticResource EqPresetConverter}}"
+                    IconSource="{StaticResource IconPlaceholder}"
+                    IsEnabled="{Binding IsEqEnabled}"
+                    Maximum="{Binding MaximumEqPreset}"
+                    Value="{Binding EqPreset}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource EqPresetConverter}" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="StereoPan" />
+                </Interaction.Behaviors>
+
+                <controls:SettingsSliderItem
+                    Name="StereoBalance"
+                    Content="{ext:Translate {x:Static i18N:Keys.EqStereoBalance}}"
+                    Description="{Binding StereoBalance, Converter={StaticResource StereoBalanceConverter}}"
+                    Debounce="True"
+                    Symbol="DualScreenSpan"
+                    Maximum="32"
+                    Value="{Binding StereoBalance}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource StereoBalanceConverter}" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+            </controls:SettingsGroup>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

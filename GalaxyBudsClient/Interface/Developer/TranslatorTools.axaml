@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:developer="clr-namespace:GalaxyBudsClient.Interface.Developer"
+        mc:Ignorable="d" d:DesignWidth="463" d:DesignHeight="380"
+        x:Class="GalaxyBudsClient.Interface.Developer.TranslatorTools"
+        Height="390" Width="460" MaxWidth="460"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Resources/icon.ico"
+        Title="Galaxy Buds Manager - Translator Tools">
+
+        <developer:TranslatorToolsView />
+</Window>

@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../GalaxyBudsClient/Host.props"/>
+    <PropertyGroup Condition="'$(_HostIsWindows)'=='true'">
+        <TargetFramework>net10.0-windows10.0.19041</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_HostIsOSX)'=='true'">
+        <ApplicationId>me.timschneeberger.galaxybudsclient.tests</ApplicationId>
+        <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0-macos</TargetFramework>
+        <LinkMode>None</LinkMode>
+        <!-- TODO it cannot find any of the main assembly's dependencies when running -->
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_HostIsLinux)'=='true'">
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <IsTestProject>true</IsTestProject>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentAssertions" Version="8.8.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+        <PackageReference Include="NUnit" Version="4.4.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="6.0.0" />
+        <PackageReference Include="NUnit.Analyzers" Version="4.11.2">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GalaxyBudsClient\GalaxyBudsClient.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="TestData/**/*.bin"  />
+    </ItemGroup>
+
+    <!-- https://github.com/xamarin/xamarin-macios/issues/15173#issuecomment-1237224832 -->
+    <UsingTask TaskName="RemoveFileNativeReferenceDuplicates" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+            <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System.Collections.Generic" />
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+			if (Files.Length > 0)
+			{
+				var itemsDict = new Dictionary<string, ITaskItem> ();
+				for (int i = 0; i < Files.Length; i++)
+				{
+					ITaskItem item = Files[i];
+					string targetPath = item.GetMetadata("RelativePath");
+					itemsDict[targetPath] = item;
+				}
+				Result = itemsDict.Values.ToArray();
+			}
+]]>
+            </Code>
+        </Task>
+    </UsingTask>
+    <Target Name="CleanFileNativeReference" AfterTargets="_ComputeFrameworkFilesToPublish" BeforeTargets="_ComputeDynamicLibrariesToReidentify">
+        <RemoveFileNativeReferenceDuplicates Files="@(_FileNativeReference)">
+            <Output TaskParameter="Result" ItemName="_DistincFileNativeReference" />
+        </RemoveFileNativeReferenceDuplicates>
+        <ItemGroup>
+            <_FileNativeReference Remove="@(_FileNativeReference)" />
+            <_FileNativeReference Include="@(_DistincFileNativeReference)" />
+        </ItemGroup>
+    </Target>
+
+</Project>

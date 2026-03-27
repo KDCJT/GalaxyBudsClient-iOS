@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.SystemPage"
+             x:DataType="pages:SystemPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:SystemPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresConnectedDeviceBehavior />
+                </Interaction.Behaviors>
+                
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemSelftest}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemSelftestDesc}}"
+                                             Symbol="Beaker"
+                                             IsClickEnabled="True"
+                                             Click="OnSelfTestClicked" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemFactoryReset}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemFactoryResetDesc}}"
+                                             Symbol="ArrowReset"
+                                             IsClickEnabled="True"
+                                             Click="OnFactoryResetClicked" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemPairingMode}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemPairingModeDesc}}"
+                                             Symbol="LinkMultiple"
+                                             IsClickEnabled="True"
+                                             Click="OnPairingModeClicked">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="PairingMode" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemSpatial}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemSpatialDesc}}"
+                                             Symbol="CubeRotate"
+                                             IsClickEnabled="True"
+                                             Click="OnSpatialSensorTestClicked">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="SpatialSensor" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemTraceCoreDump}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemTraceCoreDumpDesc}}"
+                                             Symbol="Bug"
+                                             IsClickEnabled="True"
+                                             Click="OnTraceDumpDownloadClicked">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="FragmentedMessages" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <controls:SettingsSymbolItem Name="UsageReport"
+                                             Content="{ext:Translate {x:Static i18N:Keys.SystemUsageReports}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemUsageReportsDesc}}"
+                                             Symbol="DataUsage"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="UsageReport" />
+                        <ext:RequiresConnectedDeviceBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Name="BatteryHistory"
+                                             Content="{ext:Translate {x:Static i18N:Keys.SystemBatteryStatistics}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemBatteryStatisticsDesc}}"
+                                             Symbol="DataTrending"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresDesktopBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresConnectedDeviceBehavior />
+                </Interaction.Behaviors>
+                
+                <controls:SettingsSymbolItem Name="HiddenMode"
+                                             Content="{ext:Translate {x:Static i18N:Keys.SystemHiddenAtMode}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemHiddenAtModeDesc}}"
+                                             Symbol="ErrorCircleSettings"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="HiddenAtMode" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+                
+                <controls:SettingsSymbolItem Name="Firmware"
+                                             Content="{ext:Translate {x:Static i18N:Keys.SystemFlasher}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemFlasherDesc}}"
+                                             Symbol="ArrowDownload"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="FirmwareUpdates" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Name="SystemInfo"
+                                             Content="{ext:Translate {x:Static i18N:Keys.SystemInfo}}"
+                                             Description="{ext:Translate {x:Static i18N:Keys.SystemInfoDesc}}"
+                                             Symbol="Info"
+                                             ActionSymbol="ChevronRight"
+                                             IsClickEnabled="True" />
+
+            </controls:SettingsGroup>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

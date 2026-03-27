@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             xmlns:config="clr-namespace:GalaxyBudsClient.Model.Config"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.WelcomePage"
+             x:DataType="pages:WelcomePageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:WelcomePageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.WelcomeAndroidHintTitle}}"
+                                    Message="{ext:Translate {x:Static i18N:Keys.WelcomeAndroidHint}}"
+                                    IsOpen="True"
+                                    IsClosable="False"
+                                    Severity="Warning">
+                <Interaction.Behaviors>
+                    <ext:RequiresDesktopBehavior Not="True" />
+                </Interaction.Behaviors>
+            </controls:CustomInfoBar>
+            
+            <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.Hint}}"
+                                    Message="{ext:Translate {x:Static i18N:Keys.WelcomeTextblockP1}}"
+                                    IsOpen="True"
+                                    IsClosable="False"
+                                    Severity="Informational" />
+                                    
+            <controls:SettingsGroup>
+                <controls:SettingsComboBoxItem Name="AppTheme"
+                                               Content="{ext:Translate {x:Static i18N:Keys.SettingsDarkmode}}"
+                                               Description="{ext:Translate {x:Static i18N:Keys.SettingsDarkmodeDescription}}"
+                                               IconSource="DarkTheme"
+                                               ItemsSource="{Binding ., Source={ext:ThemesBindingSource}}"
+                                               SelectedValue="{Binding Theme, Source={x:Static config:Settings.Data}}">
+                    <Interaction.Behaviors>
+                        <ext:RequiresDesktopBehavior />
+                        <ext:LocalizationAwareComboBoxBehavior />
+                    </Interaction.Behaviors>
+                </controls:SettingsComboBoxItem>
+
+                <controls:SettingsComboBoxItem Name="AppLanguage"
+                                               Content="{ext:Translate {x:Static i18N:Keys.SettingsLocalizationDisable}}"
+                                               Description="{ext:Translate {x:Static i18N:Keys.SettingsLocalizationDescription}}"
+                                               Symbol="LocalLanguage"
+                                               ItemsSource="{Binding Source={ext:LocalesBindingSource}}"
+                                               SelectedValue="{Binding Locale, Source={x:Static config:Settings.Data}}" />
+            </controls:SettingsGroup>
+
+            <Border BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
+                    BorderThickness="2"
+                    CornerRadius="4">
+                <controls:SettingsGroup>
+                    <controls:SettingsSymbolItem Name="Register"
+                                                 Content="{ext:Translate {x:Static i18N:Keys.WelcomeRegister}}"
+                                                 Description="{ext:Translate {x:Static i18N:Keys.WelcomeRegisterDesc}}"
+                                                 Symbol="LinkMultiple"
+                                                 ActionSymbol="ChevronRight"
+                                                 IsClickEnabled="True"
+                                                 Click="OnRegisterClicked" />
+                </controls:SettingsGroup>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

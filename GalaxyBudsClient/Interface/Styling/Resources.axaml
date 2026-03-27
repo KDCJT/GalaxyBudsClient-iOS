@@ -1,0 +1,56 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:converters="clr-namespace:GalaxyBudsClient.Interface.Converters"
+                    xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                    xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent">
+
+    <converters:EnumToDescriptionConverter x:Key="EnumDescriptionConverter" />
+    <converters:ModelNameConverter x:Key="ModelNameConverter" />
+    <converters:ColorUintConverter x:Key="ColorUintConverter" />
+    <converters:EqPresetConverter x:Key="EqPresetConverter" />
+    <converters:StereoBalanceConverter x:Key="StereoBalanceConverter" />
+    <converters:AmbientCustomStrengthConverter x:Key="AmbientCustomStrengthConverter" />
+    <converters:AmbientStrengthConverter x:Key="AmbientStrengthConverter" />
+    <converters:AmbientToneConverter x:Key="AmbientToneConverter" />
+    
+    <!-- Global strings -->
+    <system:String x:Key="TranslatorCreditsString">@fhalfkg; @ArthurWolfhound; @erenbektas; Andrew Gonza; @kakkk; @giovankabisano; @lucasskluser; @alb-p; @joskaja; @buashei; @ssenkrad; @KevinZonda; @mario-donnarumma; @pseudor; @cozyplanes; @KatJillianne; @Joedmin; @papercore-dev; @grigorem; @tretre91; @Sigarya; @YexuanXiao; @Benni0109; @Eta06; @juanfariasdev</system:String>
+    <system:String x:Key="ContributorCreditsString">@githubcatw; @AndriesK; @ArthurWolfhound; @TheLastFrame; @nift4</system:String>
+
+    <!-- Dimensions -->
+    <Thickness x:Key="AppPageMargin">20 0 20 20</Thickness>
+    
+    <!-- Large BreadcrumbBar -->
+    <Thickness x:Key="BreadcrumbBarChevronPadding">4,4,4,0</Thickness>
+    <FontWeight x:Key="BreadcrumbBarItemFontWeight">Bold</FontWeight>
+    <system:Double x:Key="BreadcrumbBarItemThemeFontSize">24</system:Double>
+    <system:Double x:Key="BreadcrumbBarChevronFontSize">16</system:Double>
+    <!-- FluentAvaloniaUI 2.4.x: prevent large BreadcrumbBar font from clipping -->
+    <system:Double x:Key="EllipsisItemPresenterLineHeight">30</system:Double>
+
+    <!-- Also use Bold instead of SemiBold here -->
+    <ControlTheme TargetType="TextBlock"
+                  x:Key="BoldTitleTextBlockStyle"
+                  BasedOn="{StaticResource BaseTextBlockStyle}">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="{StaticResource TitleTextBlockFontSize}" />
+    </ControlTheme>
+
+    <!-- Icons -->
+    <controls:PathIconSource x:Key="IconPlaceholder" Data="" />
+    <ic:SymbolIconSource x:Key="InstallIcon" Symbol="ArrowDownload" />
+    <ic:SymbolIconSource x:Key="OpenIcon" Symbol="FolderOpen" />
+    <ic:SymbolIconSource x:Key="ReloadIcon" Symbol="ArrowClockwise" />
+    <ic:SymbolIconSource x:Key="NewIcon" Symbol="New" />
+    <ic:SymbolIconSource x:Key="EditIcon" Symbol="Edit" />
+    <ic:SymbolIconSource x:Key="LinkMultipleIcon" Symbol="LinkMultiple" />
+    <ic:SymbolIconSource x:Key="CheckmarkSquareIcon" Symbol="CheckmarkSquare" />
+    
+    <!-- Bitmaps -->
+    <CroppedBitmap x:Key="LeftBeanConnected" Source="/Resources/Device/left_beans.png" />
+    <CroppedBitmap x:Key="RightBeanConnected" Source="/Resources/Device/right_beans.png" />
+    <CroppedBitmap x:Key="LeftProConnected" Source="/Resources/Device/left_pro.png" />
+    <CroppedBitmap x:Key="RightProConnected" Source="/Resources/Device/right_pro.png" />
+    
+</ResourceDictionary>

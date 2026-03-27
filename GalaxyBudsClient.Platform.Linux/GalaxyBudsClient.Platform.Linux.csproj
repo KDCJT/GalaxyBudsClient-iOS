@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../GalaxyBudsClient/Platform.props" />
+    
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
+        <LangVersion>latest</LangVersion>
+        
+        <!-- Code Analysis -->
+        <AnalysisLevel>latest</AnalysisLevel>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\GalaxyBudsClient.Platform\GalaxyBudsClient.Platform.csproj" />
+        <ProjectReference Include="..\ThePBone.BlueZNet\ThePBone.BlueZNet.csproj" />
+        <ProjectReference Include="..\ThePBone.MprisClient\ThePBone.MprisClient.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="SharpHook" Version="7.1.0" />
+        <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.2" />
+    </ItemGroup>
+</Project>

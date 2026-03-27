@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.SystemInfoPage"
+             x:DataType="pages:SystemInfoPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:SystemInfoPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+            </Interaction.Behaviors>
+            
+            <controls:SettingsGroup>
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemHwver}}"
+                                             Description="{Binding HwVersion}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemSwver}}"
+                                             Description="{Binding SwVersion}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemTouchver}}"
+                                             Description="{Binding TouchSwVersion}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemProtover}}"
+                                             Description="{Binding ProtocolVersion}"
+                                             IsClickEnabled="False" />
+            </controls:SettingsGroup>
+            
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="CradleSerialNumber" />
+                </Interaction.Behaviors>
+                
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemCradleSwver}}"
+                                             Description="{Binding CradleSwVersion}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemCradleSerial}}"
+                                             Description="{Binding CradleSerialNumber}"
+                                             IsClickEnabled="False" />
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemBtaddr}}"
+                                             Description="{Binding BluetoothAddress}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemSerial}}"
+                                             Description="{Binding SerialNumber}"
+                                             IsClickEnabled="False" />
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemBuildInfo}}"
+                                             Description="{Binding BuildString}"
+                                             IsClickEnabled="False">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="BuildInfo" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemSku}}"
+                                             Description="{Binding DeviceSku}"
+                                             IsClickEnabled="False">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="DebugSku" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+
+                <controls:SettingsSymbolItem Content="{ext:Translate {x:Static i18N:Keys.SystemBatteryType}}"
+                                             Description="{Binding BatteryType}"
+                                             IsClickEnabled="False">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="BatteryType" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSymbolItem>
+            </controls:SettingsGroup>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

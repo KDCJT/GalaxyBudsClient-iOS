@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+        xmlns:markupExtensions="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Fixes some display bugs on macOS -->
+    <Design.PreviewWith>
+        <Border Padding="20" Width="700" Height="230">
+            <controls:SettingsGroup>
+                <ui:SettingsExpanderItem Content="Item A" Description="Description for item A" ActionIconSource="Pin" IsClickEnabled="True" />
+                <ui:SettingsExpanderItem Content="Item B" Description="Description for item B">
+                    <ui:SettingsExpanderItem.Footer>
+                        <Button Content="FooterButton" />
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                <controls:SettingsComboBoxItem Content="Item C" 
+                                               Description="Description for item C" IsClickEnabled="True"
+                                               ItemsSource="{Binding ., Source={markupExtensions:LocalesBindingSource}}" />
+            </controls:SettingsGroup>
+        </Border>
+    </Design.PreviewWith>
+    
+    <Styles.Resources>
+        <ResourceDictionary>
+            <system:Double x:Key="SettingsSubtitleTextSpacing">4</system:Double>
+            <system:Double x:Key="StatusUnitTextSpacing">6</system:Double>
+        </ResourceDictionary>
+    </Styles.Resources>
+    
+    <!-- Add spacing between title & description of SettingsExpanderItems -->
+    <Style Selector="ui|SettingsExpanderItem /template/ StackPanel#HeaderRegion">
+        <Setter Property="Spacing"
+                Value="6" />
+    </Style>
+
+    <!-- Center ComboBox content -->
+    <Style Selector="ui|FAComboBox /template/ ContentPresenter#ContentPresenter">
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+</Styles>

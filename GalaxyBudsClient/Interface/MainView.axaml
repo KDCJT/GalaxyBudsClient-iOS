@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="using:GalaxyBudsClient.Interface.ViewModels"
+             xmlns:platform="clr-namespace:GalaxyBudsClient.Platform"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             xmlns:platUtils="clr-namespace:GalaxyBudsClient.Platform;assembly=GalaxyBudsClient.Platform"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="GalaxyBudsClient.Interface.MainView"
+             x:DataType="vm:MainViewViewModel"
+             x:CompileBindings="True">
+    
+    <Grid RowDefinitions="Auto,*">
+        <Grid Name="TitleBarHost"
+              ColumnDefinitions="*,Auto"
+              Background="Transparent" />
+
+        <ui:NavigationView Grid.Row="0"
+                           AlwaysShowHeader="False" 
+                           IsPaneOpen="False"
+                           PaneDisplayMode="Left"
+                           Grid.RowSpan="2"
+                           Name="NavView"
+                           IsSettingsVisible="False"
+                           IsBackEnabled="{Binding #FrameView.CanGoBack}">
+            <Grid RowDefinitions="Auto,Auto,*"
+                  Name="ContentContainer">
+                
+                <ui:InfoBar Grid.Row="0"
+                            Title="{ext:Translate {x:Static i18N:Keys.PlacementDisconnected}}"
+                            IsClosable="False"
+                            Severity="Warning"
+                            Message="{Binding LastErrorMessage, Source={x:Static platform:BluetoothImpl.Instance}}"
+                            Margin="20,16,20,0">
+                    <ui:InfoBar.IsOpen>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsConnected" Source="{x:Static platform:BluetoothImpl.Instance}" />
+                            <Binding Path="!AlternativeModeEnabled" Source="{x:Static platform:BluetoothImpl.Instance}" />
+                            <Binding Path="!IsInSetupWizard" />
+                        </MultiBinding>
+                    </ui:InfoBar.IsOpen>
+                    <ui:InfoBar.ActionButton>
+                        <StackPanel HorizontalAlignment="Right"
+                                    Spacing="8"
+                                    Orientation="Horizontal">
+                            <Button Content="{ext:Translate {x:Static i18N:Keys.ConnlostTroubleshoot}}"
+                                    HorizontalAlignment="Right"
+                                    IsVisible="{Binding !., Source={x:Static platUtils:PlatformUtils.IsDesktop}}"
+                                    Click="OnTroubleshootConnectionClicked"/>
+                            
+                            <Button Content="{Binding ConnectButtonText}"
+                                    IsEnabled="{Binding IsConnectButtonEnabled}"
+                                    HorizontalAlignment="Right">
+                                <Interaction.Behaviors>
+                                    <EventTriggerBehavior EventName="Click">
+                                        <ext:EventDispatcherAction Event="Connect" />
+                                    </EventTriggerBehavior>
+                                </Interaction.Behaviors>
+                            </Button>
+                        </StackPanel>
+                    </ui:InfoBar.ActionButton>
+                </ui:InfoBar>
+
+                <ui:BreadcrumbBar Name="BreadcrumbBar"
+                                  MinHeight="56"
+                                  Grid.Row="1"
+                                  ItemsSource="{Binding BreadcrumbItems}"
+                                  Margin="20,10">
+                    <ui:BreadcrumbBar.ItemTemplate>
+                        <DataTemplate x:DataType="vm:BreadcrumbViewModel">
+                            <ui:BreadcrumbBarItem Content="{Binding Title}"
+                                                  MinHeight="56" />
+                        </DataTemplate>
+                    </ui:BreadcrumbBar.ItemTemplate>
+                </ui:BreadcrumbBar>
+
+                <ui:Frame Grid.Row="2" Name="FrameView" />
+            </Grid>
+        </ui:NavigationView>
+
+    </Grid>
+
+</UserControl>

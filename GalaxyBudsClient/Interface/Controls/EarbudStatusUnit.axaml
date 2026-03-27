@@ -1,0 +1,183 @@
+﻿<Panel x:Class="GalaxyBudsClient.Interface.Controls.EarbudStatusUnit"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns="https://github.com/avaloniaui"
+       xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+       xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+       xmlns:system="clr-namespace:System;assembly=System.Runtime"
+       xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+       xmlns:converters="clr-namespace:GalaxyBudsClient.Interface.Converters"
+       xmlns:vm="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Controls"
+       xmlns:platform="clr-namespace:GalaxyBudsClient.Platform"
+       xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+       xmlns:config="clr-namespace:GalaxyBudsClient.Model.Config"
+       x:DataType="vm:EarbudStatusUnitViewModel">
+
+    <Design.DataContext>
+        <vm:EarbudStatusUnitViewModel />
+    </Design.DataContext>
+
+    <Panel.Resources>
+        <system:Double x:Key="FontSizeBatteryIcons">20</system:Double>
+        <system:Double x:Key="FontSizePercentage">19</system:Double>
+        <system:Double x:Key="FontSizeOtherLabels">14</system:Double>
+        <system:Double x:Key="FontSizeCaseLabel">13</system:Double>
+        <converters:BatterySymbolConverter x:Key="BatterySymbolConverter" />
+    </Panel.Resources>
+
+    <Grid ColumnDefinitions="*,15,Auto,15,*"
+          IsVisible="{Binding IsConnected, Source={x:Static platform:BluetoothImpl.Instance}}"
+          HorizontalAlignment="Stretch">
+        
+        <StackPanel Grid.Column="0"
+                    IsVisible="{Binding IsLeftOnline}"
+                    VerticalAlignment="Center"
+                    Spacing="{StaticResource StatusUnitTextSpacing}">
+
+            <StackPanel Spacing="0"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+
+                <TextBlock Name="LeftBatteryText"
+                           Text="{Binding LeftBattery, StringFormat={}{0}%}"
+                           FontSize="{StaticResource FontSizePercentage}"
+                           MinWidth=""
+                           HorizontalAlignment="Right" />
+
+                <ic:SymbolIcon Symbol="{Binding LeftBattery, Converter={StaticResource BatterySymbolConverter}}"
+                               Margin="0,0,-5,0"
+                               FontSize="{StaticResource FontSizeBatteryIcons}">
+                    <ic:SymbolIcon.RenderTransform>
+                        <RotateTransform Angle="270" />
+                    </ic:SymbolIcon.RenderTransform>
+                </ic:SymbolIcon>
+            </StackPanel>
+
+            <TextBlock Text="{Binding LeftVoltage, StringFormat={}{0:f2}V}"
+                       HorizontalAlignment="Right"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="Voltage" />
+                </Interaction.Behaviors>
+            </TextBlock>
+
+            <TextBlock Text="{Binding LeftCurrent, StringFormat={}{0:f2}mA}"
+                       HorizontalAlignment="Right"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="Current" />
+                </Interaction.Behaviors>
+            </TextBlock>
+
+            <TextBlock HorizontalAlignment="Right"
+                       FontSize="{StaticResource FontSizeOtherLabels}"
+                       PointerPressed="OnTemperaturePointerPressed">
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}{0:f2}°{1}">
+                        <Binding Path="LeftTemperature" />
+                        <Binding Path="TemperatureUnit"
+                                 Source="{x:Static config:Settings.Data}"
+                                 Converter="{StaticResource EnumDescriptionConverter}" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+
+            <TextBlock Text="{Binding LeftWearState, Converter={StaticResource EnumDescriptionConverter}}"
+                       HorizontalAlignment="Right"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <!-- If current data is unsupported (all models except 1st-gen) then we have enough space for placement states  -->
+                    <ext:RequiresFeatureBehavior Not="True" Feature="Current" />
+                </Interaction.Behaviors>
+            </TextBlock>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2"
+                    Orientation="Vertical"
+                    Spacing="5"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+
+            <controls:EarbudIconUnit />
+
+            <StackPanel Margin="0,-10,0,0">
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="CaseBattery" />
+                </Interaction.Behaviors>
+
+                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.Case}}"
+                           TextAlignment="Center"
+                           Opacity="0.5"
+                           IsVisible="{Binding CaseBattery, Converter={x:Static ObjectConverters.IsNotNull}}"
+                           FontSize="{StaticResource FontSizeCaseLabel}" />
+                <TextBlock Text="{Binding CaseBattery, StringFormat={}{0}%}"
+                           TextAlignment="Center"
+                           IsVisible="{Binding CaseBattery, Converter={x:Static ObjectConverters.IsNotNull}}"
+                           FontSize="{StaticResource FontSizeOtherLabels}" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="4"
+                    IsVisible="{Binding IsRightOnline}"
+                    VerticalAlignment="Center"
+                    Spacing="{StaticResource StatusUnitTextSpacing}">
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <ic:SymbolIcon Symbol="{Binding RightBattery, Converter={StaticResource BatterySymbolConverter}}"
+                               Margin="-6,0,0,0"
+                               FontSize="{StaticResource FontSizeBatteryIcons}">
+                    <ic:SymbolIcon.RenderTransform>
+                        <RotateTransform Angle="270" />
+                    </ic:SymbolIcon.RenderTransform>
+                </ic:SymbolIcon>
+
+                <TextBlock Name="RightBatteryText"
+                           Text="{Binding RightBattery, StringFormat={}{0}%}"
+                           FontSize="{StaticResource FontSizePercentage}"
+                           HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding RightVoltage, StringFormat={}{0:f2}V}"
+                       HorizontalAlignment="Left"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="Voltage" />
+                </Interaction.Behaviors>
+            </TextBlock>
+
+            <TextBlock Text="{Binding RightCurrent, StringFormat={}{0:f2}mA}"
+                       HorizontalAlignment="Left"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="Current" />
+                </Interaction.Behaviors>
+            </TextBlock>
+
+            <TextBlock HorizontalAlignment="Left"
+                       FontSize="{StaticResource FontSizeOtherLabels}"
+                       PointerPressed="OnTemperaturePointerPressed">
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}{0:f2}°{1}">
+                        <Binding Path="RightTemperature" />
+                        <Binding Path="TemperatureUnit"
+                                 Source="{x:Static config:Settings.Data}"
+                                 Converter="{StaticResource EnumDescriptionConverter}" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+
+            <TextBlock Text="{Binding RightWearState, Converter={StaticResource EnumDescriptionConverter}}"
+                       HorizontalAlignment="Left"
+                       FontSize="{StaticResource FontSizeOtherLabels}">
+                <Interaction.Behaviors>
+                    <!-- If current data is unsupported (all models except 1st-gen) then we have enough space for placement states  -->
+                    <ext:RequiresFeatureBehavior Not="True" Feature="Current" />
+                </Interaction.Behaviors>
+            </TextBlock>
+        </StackPanel>
+    </Grid>
+
+    <controls:EmptyView IsVisible="{Binding !IsConnected, Source={x:Static platform:BluetoothImpl.Instance}}"
+                        Text="{ext:Translate {x:Static i18N:Keys.ConnlostDisconnected}}"
+                        Symbol="WiFiOff" />
+</Panel>

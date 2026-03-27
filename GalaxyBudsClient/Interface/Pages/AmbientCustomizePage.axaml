@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.AmbientCustomizePage"
+             x:DataType="pages:AmbientCustomizePageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:AmbientCustomizePageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="8" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+            </Interaction.Behaviors>
+            
+            <controls:SettingsGroup>
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.AsVolume}}"
+                    Description="{Binding AmbientSoundVolume, Converter={StaticResource AmbientStrengthConverter}}"
+                    Symbol="Gauge"
+                    IsEnabled="{Binding !IsAmbientCustomizationEnabled}"
+                    Maximum="{Binding MaximumAmbientSoundVolume}"
+                    Value="{Binding AmbientSoundVolume}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource AmbientStrengthConverter}" />
+                        <ext:RequiresFeatureBehavior Feature="AmbientSoundVolume" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+                
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.AsExtrahigh}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.AsExtrahighDescription}}"
+                    Symbol="GaugeAdd"
+                    IsChecked="{Binding IsAmbientExtraLoudEnabled}">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="AmbientExtraLoud" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.AsVoicefocus}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.AsVoicefocusDescription}}"
+                    Symbol="PersonVoice"
+                    IsChecked="{Binding IsAmbientVoiceFocusEnabled}">
+                    <Interaction.Behaviors>
+                        <ext:RequiresFeatureBehavior Feature="AmbientVoiceFocus" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSwitchItem>
+            </controls:SettingsGroup>
+
+            <controls:SettingsGroup>
+                <Interaction.Behaviors>
+                    <ext:RequiresFeatureBehavior Feature="AmbientCustomize" />
+                </Interaction.Behaviors>
+
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.NcAsCustom}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.NcAsCustomDescription}}"
+                    Symbol="MicSparkle"
+                    IsChecked="{Binding IsAmbientCustomizationEnabled}" />
+
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.NcAsCustomVolumeL}}"
+                    Description="{Binding AmbientSoundVolumeLeft, Converter={StaticResource AmbientCustomStrengthConverter}}"
+                    Symbol="ArrowStepInLeft"
+                    IsEnabled="{Binding IsAmbientCustomizationEnabled}"
+                    Maximum="{Binding MaximumLeftRightAmbientSoundVolume}"
+                    Value="{Binding AmbientSoundVolumeLeft}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource AmbientCustomStrengthConverter}" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.NcAsCustomVolumeR}}"
+                    Description="{Binding AmbientSoundVolumeRight, Converter={StaticResource AmbientCustomStrengthConverter}}"
+                    Symbol="ArrowStepInRight"
+                    IsEnabled="{Binding IsAmbientCustomizationEnabled}"
+                    Maximum="{Binding MaximumLeftRightAmbientSoundVolume}"
+                    Value="{Binding AmbientSoundVolumeRight}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource AmbientCustomStrengthConverter}" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+                
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.NcAsCustomTone}}"
+                    Description="{Binding AmbientSoundTone, Converter={StaticResource AmbientToneConverter}}"
+                    Symbol="SoundSource"
+                    IsEnabled="{Binding IsAmbientCustomizationEnabled}"
+                    Maximum="4"
+                    Value="{Binding AmbientSoundTone}">
+                    <Interaction.Behaviors>
+                        <ext:LocalizationAwareSliderBehavior Converter="{StaticResource AmbientToneConverter}" />
+                    </Interaction.Behaviors>
+                </controls:SettingsSliderItem>
+
+            </controls:SettingsGroup>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
