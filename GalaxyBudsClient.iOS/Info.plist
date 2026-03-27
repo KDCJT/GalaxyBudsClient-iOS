@@ -12,6 +12,14 @@
     <string>5.2.0</string>
     <key>CFBundleVersion</key>
     <string>520</string>
+    <key>CFBundleExecutable</key>
+    <string>GalaxyBudsClient.iOS</string>
+    <key>CFBundleDisplayName</key>
+    <string>Galaxy Buds</string>
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UIRequiredDeviceCapabilities</key>
