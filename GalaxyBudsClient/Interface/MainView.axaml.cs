@@ -42,23 +42,31 @@ public partial class MainView : UserControl
         new SettingsPageViewModel()
     ];
 
-    private readonly SubPageViewModelBase[] _subPages =
-    [
-        new AmbientCustomizePageViewModel(),
-        new BixbyRemapPageViewModel(),
-        new FirmwarePageViewModel(),
-        new FitTestPageViewModel(),
-        new HotkeyPageViewModel(),
-        new SystemInfoPageViewModel(),
-        new RenamePageViewModel(),
-        new FmmConfigPageViewModel(),
-        new UsageReportPageViewModel(),
-        new BatteryHistoryPageViewModel(),
-        new HiddenModePageViewModel()
-    ];
-    
+    private readonly SubPageViewModelBase[] _subPages;
+
     public MainView()
     {
+        var subPagesList = new List<SubPageViewModelBase>
+        {
+            new AmbientCustomizePageViewModel(),
+            new BixbyRemapPageViewModel(),
+            new FirmwarePageViewModel(),
+            new FitTestPageViewModel(),
+            new HotkeyPageViewModel(),
+            new SystemInfoPageViewModel(),
+            new RenamePageViewModel(),
+            new FmmConfigPageViewModel(),
+            new UsageReportPageViewModel(),
+            new HiddenModePageViewModel()
+        };
+
+        if (PlatformUtils.IsDesktop)
+        {
+            subPagesList.Add(new BatteryHistoryPageViewModel());
+        }
+
+        _subPages = [.. subPagesList];
+        
         InitializeComponent();
         Instance = this;
         

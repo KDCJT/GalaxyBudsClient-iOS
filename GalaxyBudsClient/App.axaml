@@ -64,6 +64,7 @@
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
         </Style>
     </Application.Styles>
+    <!--
     <TrayIcon.Icons>
         <TrayIcons>
             <TrayIcon Menu="{Binding TrayMenu, DataType=galaxyBudsClient:App}"
@@ -73,4 +74,5 @@
                       Clicked="TrayIcon_OnClicked" />
         </TrayIcons>
     </TrayIcon.Icons>
+    -->
 </Application>
