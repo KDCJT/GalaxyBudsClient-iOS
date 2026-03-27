@@ -90,7 +90,7 @@ public class App : Application
         }, DispatcherPriority.Render);
         
         Log.Information("Translator mode file location: {File}", Loc.TranslatorModeFile);
-#if !Android
+#if !Android && !iOS
         ScriptManager.Instance.RegisterUserHooks();
         Log.Debug("Environment: {Env}", _experimentManager.CurrentEnvironment());
 #endif
@@ -101,7 +101,10 @@ public class App : Application
         if (BluetoothImpl.HasValidDevice)
         {
             Task.Run(() => BluetoothImpl.Instance.ConnectAsync());
-            _ = TrayManager.Instance.RebuildAsync();
+            if (PlatformUtils.IsDesktop)
+            {
+                _ = TrayManager.Instance.RebuildAsync();
+            }
         }
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -111,8 +114,11 @@ public class App : Application
             // Stay initially minimized: don't attach a main window
             desktop.MainWindow = StartMinimized ? null : mainWindow;
             
-            TrayManager.Init();
-            BatteryHistoryManager.Init();
+            if (PlatformUtils.IsDesktop)
+            {
+                TrayManager.Init();
+                BatteryHistoryManager.Init();
+            }
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {

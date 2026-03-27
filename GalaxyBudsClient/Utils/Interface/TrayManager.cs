@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,6 +25,9 @@ internal class TrayManager
 
     private TrayManager()
     {
+        if (!PlatformUtils.IsDesktop || (Application.Current as App)?.TrayMenu == null)
+            return;
+
         // Make sure nobody is updating the menu while it's open
         // because it crashes mac https://github.com/AvaloniaUI/Avalonia/issues/14578
         (Application.Current as App)!.TrayMenu.Opening += (_, _) => _allowUpdate = false;

@@ -16,13 +16,16 @@ public static class PlatformUtils
         Linux,
         OSX,
         Android,
+        iOS,
         Other
     }
 
     public static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     public static bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public static bool IsOSX => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-    public static bool IsAndroid => RuntimeInformation.RuntimeIdentifier.Contains("android", StringComparison.OrdinalIgnoreCase);
+    public static bool IsAndroid => RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID")) || RuntimeInformation.RuntimeIdentifier.Contains("android", StringComparison.OrdinalIgnoreCase);
+    public static bool IsiOS => RuntimeInformation.IsOSPlatform(OSPlatform.Create("IOS")) || RuntimeInformation.RuntimeIdentifier.Contains("ios", StringComparison.OrdinalIgnoreCase);
+    public static bool IsMobile => IsAndroid || IsiOS;
     public static bool IsDesktop => IsWindows || IsLinux || IsOSX;
     public static bool IsRunningInFlatpak => Environment.GetEnvironmentVariable("container") != null;
 
@@ -44,6 +47,8 @@ public static class PlatformUtils
                 return Platforms.Linux;
             if (IsOSX)
                 return Platforms.OSX;
+            if (IsiOS)
+                return Platforms.iOS;
             return IsAndroid ? Platforms.Android : Platforms.Other;
         }
     }
@@ -77,9 +82,16 @@ public static class PlatformUtils
         
     public static string CombineDataPath(string postfix)
     {
-        return Path.Combine(AppDataPath, postfix);
+        var path = Path.Combine(AppDataPath, postfix);
+        var dir = Path.GetDirectoryName(path);
+        if (dir != null && !Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+        return path;
     }
 
-    public static string AppDataPath =>
-        $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/GalaxyBudsClient/";
+    public static string AppDataPath => IsiOS 
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "GalaxyBudsClient")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GalaxyBudsClient");
 }
