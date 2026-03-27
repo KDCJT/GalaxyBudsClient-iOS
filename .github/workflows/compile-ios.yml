@@ -37,7 +37,8 @@ jobs:
           --no-restore \
           --self-contained \
           -p:IsiOS=true \
-          -p:MtouchLink=None \
+          -p:MtouchLink=SdkOnly \
+          -p:UseInterpreter=true \
           /p:BuildIpa=false \
           /p:EnableCodeSigning=false \
           /p:_SkipCodeSignature=true \
