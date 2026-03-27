@@ -50,7 +50,7 @@ public class BluetoothService : IBluetoothService
                 true,
                 true,
                 new BluetoothCoD(0), // CoD not easily available via EA
-                a.ProtocolStrings))
+                null))
             .ToArray();
         
         return Task.FromResult(devices);
