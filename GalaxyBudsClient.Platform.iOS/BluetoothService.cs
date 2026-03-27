@@ -112,22 +112,16 @@ public class BluetoothService : IBluetoothService
             {
                 if (_session.InputStream.HasBytesAvailable())
                 {
-                    unsafe
+                    nint bytesRead = _session.InputStream.Read(buffer, (nuint)buffer.Length);
+                    if (bytesRead > 0)
                     {
-                        fixed (byte* pBuffer = buffer)
-                        {
-                            nint bytesRead = _session.InputStream.Read((IntPtr)pBuffer, (nuint)buffer.Length);
-                            if (bytesRead > 0)
-                            {
-                                var data = new byte[(int)bytesRead];
-                                Array.Copy(buffer, 0, data, 0, (int)bytesRead);
-                                NewDataAvailable?.Invoke(this, data);
-                            }
-                            else if (bytesRead == 0)
-                            {
-                                break; 
-                            }
-                        }
+                        var data = new byte[(int)bytesRead];
+                        Array.Copy(buffer, 0, data, 0, (int)bytesRead);
+                        NewDataAvailable?.Invoke(this, data);
+                    }
+                    else if (bytesRead == 0)
+                    {
+                        break; 
                     }
                 }
                 await Task.Delay(10, token); // Small delay to prevent tight loop if no data
@@ -163,13 +157,7 @@ public class BluetoothService : IBluetoothService
     {
         if (_session?.OutputStream != null && data.Length > 0)
         {
-            unsafe
-            {
-                fixed (byte* pData = data)
-                {
-                    _session.OutputStream.Write((IntPtr)pData, (nuint)data.Length);
-                }
-            }
+            _session.OutputStream.Write(data, (nuint)data.Length);
         }
         return Task.CompletedTask;
     }
