@@ -37,7 +37,7 @@ jobs:
           --no-restore \
           --self-contained \
           -p:IsiOS=true \
-          -p:MtouchLink=SdkOnly \
+          -p:MtouchLink=None \
           -p:UseInterpreter=true \
           -p:MtouchInterpreter=all \
           -p:CodesignEntitlements="Entitlements.plist" \
