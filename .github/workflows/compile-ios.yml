@@ -48,7 +48,10 @@ jobs:
     - name: Prepare IPA for Upload (TrollStore)
       run: |
         mkdir -p Payload
-        cp -r GalaxyBudsClient.iOS/bin/Release/net10.0-ios/ios-arm64/publish/GalaxyBudsClient.iOS.app Payload/
+        # Find the .app directory dynamically to avoid path issues
+        APP_PATH=$(find ./GalaxyBudsClient.iOS/bin -name "*.app" -type d | head -n 1)
+        echo "Found app at: $APP_PATH"
+        cp -r "$APP_PATH" Payload/
         zip -r GalaxyBudsClient_iOS_TrollStore.ipa Payload
         
     - name: Upload IPA artifact
