@@ -19,8 +19,11 @@ jobs:
       with:
         global-json-file: global.json
 
-    - name: Install iOS Workload
-      run: dotnet workload install ios
+    - name: Install Platform Workloads
+      run: dotnet workload install ios macos android
+
+    - name: Restore workloads
+      run: dotnet workload restore
 
     - name: Restore dependencies
       run: dotnet restore GalaxyBudsClient.iOS/GalaxyBudsClient.iOS.csproj --configfile GalaxyBudsClient/nuget.config
