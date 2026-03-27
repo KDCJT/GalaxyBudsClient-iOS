@@ -37,11 +37,11 @@ jobs:
           --no-restore \
           --self-contained \
           -p:IsiOS=true \
-          /p:BuildIpa=true \
+          /p:BuildIpa=false \
           /p:CodesignKey="" \
           /p:CodesignProvision=""
 
-    - name: Prepare IPA for Upload
+    - name: Prepare IPA for Upload (TrollStore)
       run: |
         mkdir -p Payload
         cp -r GalaxyBudsClient.iOS/bin/Release/net10.0-ios/ios-arm64/publish/GalaxyBudsClient.iOS.app Payload/
