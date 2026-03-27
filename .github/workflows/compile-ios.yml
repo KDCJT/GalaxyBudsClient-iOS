@@ -37,6 +37,7 @@ jobs:
           --no-restore \
           --self-contained \
           -p:IsiOS=true \
+          -p:PublishTrimmed=false \
           /p:BuildIpa=false \
           /p:EnableCodeSigning=false \
           /p:_SkipCodeSignature=true \
