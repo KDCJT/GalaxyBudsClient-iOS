@@ -110,7 +110,7 @@ public class BluetoothService : IBluetoothService
         {
             while (!token.IsCancellationRequested && _session?.InputStream != null)
             {
-                if (_session.InputStream.HasBytesAvailable)
+                if (_session.InputStream.HasBytesAvailable())
                 {
                     unsafe
                     {
@@ -119,8 +119,8 @@ public class BluetoothService : IBluetoothService
                             nint bytesRead = _session.InputStream.Read((IntPtr)pBuffer, (nuint)buffer.Length);
                             if (bytesRead > 0)
                             {
-                                var data = new byte[bytesRead];
-                                Array.Copy(buffer, 0, data, 0, bytesRead);
+                                var data = new byte[(int)bytesRead];
+                                Array.Copy(buffer, 0, data, 0, (int)bytesRead);
                                 NewDataAvailable?.Invoke(this, data);
                             }
                             else if (bytesRead == 0)
