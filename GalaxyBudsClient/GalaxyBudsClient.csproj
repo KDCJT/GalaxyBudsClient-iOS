@@ -33,9 +33,12 @@
     <PropertyGroup Condition="'$(IsLinux)'=='true'">
         <OutputType>Exe</OutputType>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(IsAndroid)'=='true'">
+    <PropertyGroup Condition="'$(IsAndroid)'=='true' Or '$(IsiOS)'=='true'">
         <OutputType>Library</OutputType>
         <DefineConstants>$(DefineConstants);Android</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsiOS)'=='true'">
+        <DefineConstants>$(DefineConstants);iOS</DefineConstants>
     </PropertyGroup>
     
     <Import Project="Application.props" />
