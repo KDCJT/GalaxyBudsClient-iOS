@@ -88,6 +88,9 @@ public class PrivateBluetoothService : IBluetoothService
             // Dump ALL instance methods so we know exactly what's available on this iOS version
             DumpAllMethods(btClass, "BluetoothManager");
 
+            // Try to activate the XPC connection to bluetoothd using known init selectors
+            TryInitialize();
+
             // Also try BTLocalDevice which is the newer API on iOS 15
             var btLocalClass = Class.GetHandle("BTLocalDevice");
             if (btLocalClass != nint.Zero)
@@ -97,10 +100,7 @@ public class PrivateBluetoothService : IBluetoothService
                 var localDev = MsgSend(btLocalClass, Selector.GetHandle("sharedInstance"));
                 Log($"BTLocalDevice sharedInstance: 0x{localDev:X}");
                 if (localDev != nint.Zero)
-                {
-                    // Try pairedDevices on BTLocalDevice
                     TryListDevices(localDev, "BTLocalDevice");
-                }
             }
             else
             {
@@ -132,6 +132,39 @@ public class PrivateBluetoothService : IBluetoothService
         catch (Exception ex) { Log($"DumpAllMethods({className}) ERROR: {ex.Message}"); }
     }
 
+    private void TryInitialize()
+    {
+        // Try known init selectors from the method list to activate XPC connection.
+        // _attach and _setup: are internal init methods seen in iOS 15 BluetoothManager.
+        var initSelectors = new[] { "_attach", "setPowered:", "setEnabled:" };
+        foreach (var sel in initSelectors)
+        {
+            try
+            {
+                if (sel.EndsWith(":"))
+                    MsgSendVoidP(_btManager, Selector.GetHandle(sel), (nint)1); // bool YES = 1
+                else
+                    MsgSendVoidP(_btManager, Selector.GetHandle(sel), nint.Zero);
+                Log($"TryInitialize: '{sel}' called OK");
+            }
+            catch (Exception ex)
+            {
+                var reason = ex.Message.Contains("unrecognized") ? "unrecognized selector" : ex.Message;
+                Log($"TryInitialize: '{sel}' → {reason}");
+            }
+        }
+
+        // Check state after init
+        try
+        {
+            bool isEnabled = MsgSendBool(_btManager, Selector.GetHandle("enabled"));
+            bool isPowered = MsgSendBool(_btManager, Selector.GetHandle("powered"));
+            bool isAvailable = MsgSendBool(_btManager, Selector.GetHandle("available"));
+            Log($"State after init: enabled={isEnabled}, powered={isPowered}, available={isAvailable}");
+        }
+        catch (Exception ex) { Log($"State check error: {ex.Message}"); }
+    }
+
     private void TryListDevices(nint manager, string tag)
     {
         var selectors = new[] { "pairedDevices", "connectedDevices", "devices", "deviceList", "allDevices" };
@@ -143,10 +176,21 @@ public class PrivateBluetoothService : IBluetoothService
                 if (ptr == nint.Zero) { Log($"[{tag}] '{sel}' → nil"); continue; }
                 var count = MsgSendUint(ptr, Selector.GetHandle("count"));
                 Log($"[{tag}] '{sel}' → count={count}");
+                if (count > 0)
+                {
+                    // Log device names if any
+                    for (nuint i = 0; i < count; i++)
+                    {
+                        var devPtr = MsgSendP(ptr, Selector.GetHandle("objectAtIndex:"), (nint)i);
+                        var name = GetNSString(devPtr, "name");
+                        var addr = GetNSString(devPtr, "address");
+                        var ident = GetNSString(devPtr, "identifier");
+                        Log($"  [{tag}][{i}] name={name}, address={addr}, identifier={ident}");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                // Only log the reason, not the full stack trace for known "unrecognized selector" cases
                 var reason = ex.Message.Contains("unrecognized selector") 
                     ? "unrecognized selector" : ex.Message;
                 Log($"[{tag}] '{sel}' → {reason}");
@@ -216,14 +260,21 @@ public class PrivateBluetoothService : IBluetoothService
 
             nint targetDevice = nint.Zero;
 
-            // Try deviceForAddress: with the user-provided MAC
+            // Use the CORRECT method name confirmed from method dump: deviceFromAddressString:
             try
             {
                 using var nsAddr = new NSString(macAddress);
-                targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceForAddress:"), nsAddr.Handle);
-                Log($"deviceForAddress: → 0x{targetDevice:X}");
+                targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceFromAddressString:"), nsAddr.Handle);
+                Log($"deviceFromAddressString: → 0x{targetDevice:X}");
+
+                if (targetDevice == nint.Zero)
+                {
+                    // Also try deviceFromIdentifier: (some iOS versions use different format)
+                    targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceFromIdentifier:"), nsAddr.Handle);
+                    Log($"deviceFromIdentifier: → 0x{targetDevice:X}");
+                }
             }
-            catch (Exception ex) { Log($"deviceForAddress: error: {ex.Message}"); }
+            catch (Exception ex) { Log($"deviceFromAddressString: error: {ex.Message}"); }
 
             if (targetDevice == nint.Zero)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
