@@ -74,29 +74,12 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR setting scheduler: {ex}\n");
         }
 
-        // Show setup dialog after Avalonia window initializes
-        ScheduleMacSetupDialogIfNeeded();
+        // We no longer blindly schedule the dialog.
+        // PrivateBluetoothService will trigger it via ShowMacInputDialog if it really cannot find any devices automatically.
 
         return result;
     }
 
-    private void ScheduleMacSetupDialogIfNeeded()
-    {
-        NSRunLoop.Main.BeginInvokeOnMainThread(() =>
-        {
-            System.Threading.Tasks.Task.Delay(2500).ContinueWith(_ =>
-            {
-                NSRunLoop.Main.BeginInvokeOnMainThread(() =>
-                {
-                    try { ShowMacSetupDialog(); }
-                    catch (Exception ex)
-                    {
-                        File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ShowMacSetupDialog startup error: {ex}\n");
-                    }
-                });
-            });
-        });
-    }
 
     internal static void ShowMacSetupDialog(Action? onSaved = null)
     {
@@ -108,8 +91,8 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: ShowMacSetupDialog called. CurrentMac={currentMac}\n");
 
         var alert = UIAlertController.Create(
-            "配置 Galaxy Buds MAC 地址",
-            "iOS 设置 → 蓝牙 → Galaxy Buds 旁边的 'i' 按钮 → 找不到地址，请使用三星穿戴 App 或在 PC 端查看配对设备地址。\n\n格式：AA:BB:CC:DD:EE:FF",
+            "请获取并输入 Galaxy Buds MAC 地址",
+            "自动读取系统蓝牙配对记录失败（或者是首次安装）。\n\niOS 14+ 隐藏了真实的蓝牙 MAC 地址。\n如果您需要临时连接，请将耳机连接到 Windows 电脑（设备属性 -> 详细信息 -> 蓝牙设备地址）或任意安卓手机，在此处填入 12 位大写地址。\n\n格式：AA:BB:CC:DD:EE:FF",
             UIAlertControllerStyle.Alert);
 
         alert.AddTextField(tf =>
