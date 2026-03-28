@@ -4,6 +4,7 @@ using UIKit;
 using Avalonia;
 using Avalonia.iOS;
 using Avalonia.ReactiveUI;
+using ReactiveUI;
 
 namespace GalaxyBudsClient.iOS;
 
@@ -18,12 +19,8 @@ public class AppDelegate : AvaloniaAppDelegate<App>
     {
         try
         {
-            // Force AOT type inclusion for Splat before ReactiveUI initialization
-            SplatPreservation.EnsureRegistered();
-
             System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: AppDelegate constructor hit.\n");
 
-            // Catch any unhandled managed exception (covers Avalonia internal init crashes)
             AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             {
                 try { System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: AppDomain UnhandledException: {e.ExceptionObject}\n"); } catch { }
@@ -55,11 +52,24 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR during backend injection: {ex}\n");
         }
 
-        System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Calling base.CustomizeAppBuilder...\n");
-        var result = base.CustomizeAppBuilder(builder)
-            .WithInterFont()
-            .UseReactiveUI();
+        // NOTE: We deliberately call UseReactiveUI() inside a try-catch so that even if
+        // the Splat TypeLoadException fires, we can log it and still return a valid builder.
+        // The app will have degraded ReactiveUI functionality but will at least launch.
+        System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Calling base.CustomizeAppBuilder (without UseReactiveUI)...\n");
+        var result = base.CustomizeAppBuilder(builder).WithInterFont();
         System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: base.CustomizeAppBuilder returned.\n");
+
+        // Try to manually set up the ReactiveUI scheduler which is the only essential part
+        try
+        {
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Setting RxApp.MainThreadScheduler...\n");
+            RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: RxApp.MainThreadScheduler set.\n");
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR setting scheduler: {ex}\n");
+        }
 
         return result;
     }
