@@ -5,7 +5,6 @@ using Foundation;
 using UIKit;
 using Avalonia;
 using Avalonia.iOS;
-using Avalonia.ReactiveUI;
 using ReactiveUI;
 
 namespace GalaxyBudsClient.iOS;
@@ -61,45 +60,37 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR during backend injection: {ex}\n");
         }
 
-        File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Calling base.CustomizeAppBuilder (without UseReactiveUI)...\n");
+        File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Calling base.CustomizeAppBuilder...\n");
         var result = base.CustomizeAppBuilder(builder).WithInterFont();
         File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: base.CustomizeAppBuilder returned.\n");
 
         try
         {
-            File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Setting RxApp.MainThreadScheduler...\n");
             RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
-            File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: RxApp.MainThreadScheduler set.\n");
         }
         catch (Exception ex)
         {
             File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ERROR setting scheduler: {ex}\n");
         }
 
-        // Schedule native MAC address setup dialog (deferred so Avalonia window loads first)
+        // Show setup dialog after Avalonia window initializes
         ScheduleMacSetupDialogIfNeeded();
 
         return result;
     }
 
-    /// <summary>
-    /// Shows a native UIAlertController asking the user for the Galaxy Buds MAC address
-    /// the first time the app runs, or when no device is configured.
-    /// This bypasses the Avalonia UI entirely and uses native iOS dialogs.
-    /// </summary>
     private void ScheduleMacSetupDialogIfNeeded()
     {
-        // Delay to allow Avalonia's root view controller to initialize
         NSRunLoop.Main.BeginInvokeOnMainThread(() =>
         {
-            System.Threading.Tasks.Task.Delay(1500).ContinueWith(_ =>
+            System.Threading.Tasks.Task.Delay(2500).ContinueWith(_ =>
             {
                 NSRunLoop.Main.BeginInvokeOnMainThread(() =>
                 {
                     try { ShowMacSetupDialog(); }
                     catch (Exception ex)
                     {
-                        File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ShowMacSetupDialog error: {ex}\n");
+                        File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: ShowMacSetupDialog startup error: {ex}\n");
                     }
                 });
             });
@@ -116,8 +107,8 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: ShowMacSetupDialog called. CurrentMac={currentMac}\n");
 
         var alert = UIAlertController.Create(
-            "配置 Galaxy Buds 设备",
-            "请在 iOS【设置 → 蓝牙】中，点击 Galaxy Buds 旁边的 ⓘ，找到\"地址\"栏（格式：AA:BB:CC:DD:EE:FF）并输入。",
+            "配置 Galaxy Buds MAC 地址",
+            "iOS 设置 → 蓝牙 → Galaxy Buds 旁边的 'i' 按钮 → 找不到地址，请使用三星穿戴 App 或在 PC 端查看配对设备地址。\n\n格式：AA:BB:CC:DD:EE:FF",
             UIAlertControllerStyle.Alert);
 
         alert.AddTextField(tf =>
@@ -126,10 +117,9 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             tf.Placeholder = "AA:BB:CC:DD:EE:FF";
             tf.AutocorrectionType = UITextAutocorrectionType.No;
             tf.AutocapitalizationType = UITextAutocapitalizationType.AllCharacters;
-            tf.KeyboardType = UIKeyboardType.Default;
         });
 
-        alert.AddAction(UIAlertAction.Create("保存", UIAlertActionStyle.Default, action =>
+        alert.AddAction(UIAlertAction.Create("保存并连接", UIAlertActionStyle.Default, action =>
         {
             var mac = alert.TextFields?.FirstOrDefault()?.Text?.Trim() ?? "";
             if (!string.IsNullOrWhiteSpace(mac))
@@ -143,9 +133,60 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
         alert.AddAction(UIAlertAction.Create("取消", UIAlertActionStyle.Cancel, null));
 
-        var rootVc = UIApplication.SharedApplication.KeyWindow?.RootViewController;
-        var presenter = GetTopViewController(rootVc);
-        presenter?.PresentViewController(alert, true, null);
+        // iOS 15 compatible: use UIWindowScene instead of deprecated KeyWindow
+        var presenter = GetPresentingViewController(logPath);
+        if (presenter == null)
+        {
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: ERROR: Could not find presenter VC\n");
+            return;
+        }
+        File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: Presenting alert on {presenter.GetType().Name}\n");
+        presenter.PresentViewController(alert, animated: true, completionHandler: null);
+    }
+
+    /// <summary>
+    /// Gets the top-most view controller using iOS 15-compatible APIs.
+    /// Falls back to KeyWindow for older iOS versions.
+    /// </summary>
+    private static UIViewController? GetPresentingViewController(string logPath)
+    {
+        try
+        {
+            // iOS 13+: Use UIWindowScene
+            UIWindow? window = null;
+            var scenes = UIApplication.SharedApplication.ConnectedScenes;
+            if (scenes != null)
+            {
+                foreach (var scene in scenes)
+                {
+                    if (scene is UIWindowScene windowScene)
+                    {
+                        window = windowScene.Windows?
+                            .OrderByDescending(w => w.WindowLevel.RawValue)
+                            .FirstOrDefault(w => !w.IsHidden);
+                        if (window != null) break;
+                    }
+                }
+            }
+
+            // Fallback to KeyWindow for iOS < 13
+            window ??= UIApplication.SharedApplication.KeyWindow;
+
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: Found window: {window?.GetType().Name ?? "null"}\n");
+
+            if (window?.RootViewController == null)
+            {
+                File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: RootViewController is null\n");
+                return null;
+            }
+
+            return GetTopViewController(window.RootViewController);
+        }
+        catch (Exception ex)
+        {
+            File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: GetPresentingVC error: {ex.Message}\n");
+            return null;
+        }
     }
 
     private static UIViewController? GetTopViewController(UIViewController? vc)

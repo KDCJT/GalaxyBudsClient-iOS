@@ -172,18 +172,49 @@ public class PrivateBluetoothService : IBluetoothService
     }
 
     /// <summary>
-    /// Reads the iOS Bluetooth pairing database plist to extract MAC addresses and device names.
-    /// TrollStore (platform-application) has elevated file system access that allows reading these files.
+    /// Reads the iOS Bluetooth pairing database to extract device MAC addresses.
+    /// First enumerates known directories to find the actual file path.
     /// </summary>
     private BluetoothDevice[] ReadBluetoothPairingDatabase()
     {
-        // Known paths for the BT pairing database on iOS 14/15
+        // Enumerate Bluetooth directories to find what files actually exist
+        var btDirs = new[]
+        {
+            "/private/var/mobile/Library/Bluetooth",
+            "/var/mobile/Library/Bluetooth",
+            "/private/var/preferences",
+            "/var/preferences",
+        };
+
+        foreach (var dir in btDirs)
+        {
+            try
+            {
+                if (Directory.Exists(dir))
+                {
+                    var files = Directory.GetFiles(dir);
+                    Log($"Dir {dir}: {files.Length} files");
+                    foreach (var f in files)
+                        Log($"  file: {Path.GetFileName(f)}");
+                }
+                else
+                {
+                    Log($"Dir not accessible: {dir}");
+                }
+            }
+            catch (Exception ex) { Log($"Dir enum error {dir}: {ex.Message}"); }
+        }
+
+        // Try known plist paths (expanded list)
         var candidatePaths = new[]
         {
+            "/private/var/mobile/Library/Bluetooth/com.apple.MobileBluetooth.devices.plist",
+            "/private/var/mobile/Library/Bluetooth/devices.plist",
+            "/private/var/mobile/Library/Bluetooth/BTServer.plist",
+            "/var/mobile/Library/Bluetooth/com.apple.MobileBluetooth.devices.plist",
+            "/var/mobile/Library/Bluetooth/devices.plist",
             "/private/var/preferences/com.apple.MobileBluetooth.devices.plist",
             "/var/preferences/com.apple.MobileBluetooth.devices.plist",
-            "/private/var/mobile/Library/Bluetooth/com.apple.MobileBluetooth.devices.plist",
-            "/var/mobile/Library/Bluetooth/com.apple.MobileBluetooth.devices.plist",
             "/private/var/mobile/Library/Preferences/com.apple.MobileBluetooth.plist",
         };
 
@@ -191,77 +222,88 @@ public class PrivateBluetoothService : IBluetoothService
         {
             try
             {
-                if (!File.Exists(path))
-                {
-                    Log($"BT plist not found: {path}");
-                    continue;
-                }
+                if (!File.Exists(path)) continue;
+                Log($"Found BT plist: {path}");
 
-                Log($"Reading BT plist: {path}");
                 var plistData = NSData.FromFile(path);
-                if (plistData == null) { Log($"NSData.FromFile returned nil for {path}"); continue; }
+                if (plistData == null) continue;
 
                 NSError? err;
                 NSPropertyListFormat fmt = NSPropertyListFormat.Binary;
-                var dict = (NSDictionary?)NSPropertyListSerialization.PropertyListWithData(
+                var obj = NSPropertyListSerialization.PropertyListWithData(
                     plistData, NSPropertyListReadOptions.Immutable, ref fmt, out err);
 
-                if (dict == null)
-                {
-                    Log($"Failed to parse plist at {path}: {err?.LocalizedDescription}");
-                    continue;
-                }
+                if (obj == null) { Log($"Parse failed: {err?.LocalizedDescription}"); continue; }
 
-                Log($"Parsed plist: {dict.Count} top-level keys");
-                var devices = new List<BluetoothDevice>();
-
-                foreach (var key in dict.Keys)
-                {
-                    var macAddr = key.ToString() ?? "";
-                    if (!macAddr.Contains(":") && !macAddr.Contains("-")) continue; // not a MAC address key
-
-                    var deviceDict = dict.ObjectForKey(key) as NSDictionary;
-                    if (deviceDict == null) continue;
-
-                    // Try to get device name from common plist keys
-                    var name = (deviceDict["Name"] as NSString)?.ToString()
-                               ?? (deviceDict["DefaultName"] as NSString)?.ToString()
-                               ?? (deviceDict["ProductName"] as NSString)?.ToString()
-                               ?? "Unknown";
-
-                    Log($"  BT DB device: {name} @ {macAddr}");
-
-                    // Only include if it looks like a Samsung/Galaxy Buds device
-                    // (but also return all for diagnostic purposes on first run)
-                    devices.Add(new BluetoothDevice(name, macAddr, true, false, new BluetoothCoD(0), null));
-                }
-
-                if (devices.Count > 0)
-                {
-                    // Save the first Galaxy Buds device found to NSUserDefaults
-                    var buds = devices.FirstOrDefault(d =>
-                        d.Name.Contains("Buds", StringComparison.OrdinalIgnoreCase) ||
-                        d.Name.Contains("Galaxy", StringComparison.OrdinalIgnoreCase) ||
-                        d.Name.Contains("Samsung", StringComparison.OrdinalIgnoreCase));
-
-                    if (buds != null && !string.IsNullOrEmpty(buds.Address))
-                    {
-                        NSUserDefaults.StandardUserDefaults.SetString(buds.Address, MacAddressDefaultsKey);
-                        NSUserDefaults.StandardUserDefaults.Synchronize();
-                        Log($"Auto-saved Buds MAC from DB: {buds.Address}");
-                    }
-
-                    return devices.ToArray();
-                }
+                Log($"Parsed {path}: type={obj.GetType().Name}");
+                var devices = ParseBluetoothPlist(obj);
+                if (devices.Length > 0) return devices;
             }
-            catch (Exception ex)
-            {
-                Log($"ReadBluetoothPairingDatabase error at {path}: {ex.Message}");
-            }
+            catch (Exception ex) { Log($"Error reading {path}: {ex.Message}"); }
         }
 
         return Array.Empty<BluetoothDevice>();
     }
+
+    private BluetoothDevice[] ParseBluetoothPlist(NSObject plistRoot)
+    {
+        var result = new List<BluetoothDevice>();
+        var dict = plistRoot as NSDictionary;
+        if (dict == null) return result.ToArray();
+
+        Log($"Plist top-level keys ({dict.Count}): {string.Join(", ", dict.Keys.Take(5).Select(k => k.ToString()))}");
+
+        // Format 1: { "AA:BB:CC:DD:EE:FF" = { Name = "..."; ... } }
+        foreach (var key in dict.Keys)
+        {
+            var keyStr = key.ToString() ?? "";
+            if (keyStr.Contains(":") || keyStr.Contains("-"))
+            {
+                var sub = dict.ObjectForKey(key) as NSDictionary;
+                if (sub == null) continue;
+                var name = (sub["Name"] ?? sub["DefaultName"] ?? sub["ProductName"])?.ToString() ?? keyStr;
+                Log($"  Found device: {name} @ {keyStr}");
+                result.Add(new BluetoothDevice(name, keyStr, true, false, new BluetoothCoD(0), null));
+            }
+        }
+
+        // Format 2: { "devices" = [ { Address = "...", Name = "..." }, ... ] }
+        if (result.Count == 0)
+        {
+            var devicesArr = (dict["devices"] ?? dict["Devices"]) as NSArray;
+            if (devicesArr != null)
+            {
+                for (nuint i = 0; i < devicesArr.Count; i++)
+                {
+                    var item = devicesArr.GetItem<NSDictionary>(i);
+                    var addr = (item?["Address"] ?? item?["address"])?.ToString() ?? "";
+                    var name = (item?["Name"] ?? item?["name"])?.ToString() ?? addr;
+                    if (!string.IsNullOrEmpty(addr))
+                    {
+                        Log($"  Found device (arr): {name} @ {addr}");
+                        result.Add(new BluetoothDevice(name, addr, true, false, new BluetoothCoD(0), null));
+                    }
+                }
+            }
+        }
+
+        // Auto-save the first Galaxy Buds device found
+        var buds = result.FirstOrDefault(d =>
+            d.Name.Contains("Buds", StringComparison.OrdinalIgnoreCase) ||
+            d.Name.Contains("Galaxy", StringComparison.OrdinalIgnoreCase) ||
+            d.Name.Contains("Samsung", StringComparison.OrdinalIgnoreCase));
+
+        if (buds != null && !string.IsNullOrEmpty(buds.Address))
+        {
+            NSUserDefaults.StandardUserDefaults.SetString(buds.Address, MacAddressDefaultsKey);
+            NSUserDefaults.StandardUserDefaults.Synchronize();
+            Log($"Auto-saved Buds MAC: {buds.Address}");
+        }
+
+        return result.ToArray();
+    }
+
+
 
     private void TriggerScan()
     {
