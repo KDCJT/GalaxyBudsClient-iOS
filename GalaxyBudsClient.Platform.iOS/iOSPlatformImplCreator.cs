@@ -5,7 +5,7 @@ namespace GalaxyBudsClient.Platform.iOS;
 public class iOSPlatformImplCreator : IPlatformImplCreator
 {
     public IDesktopServices CreateDesktopServices() => new DesktopServices();
-    public IBluetoothService CreateBluetoothService() => new BluetoothService();
+    public IBluetoothService CreateBluetoothService() => new PrivateBluetoothService();
     public IHotkeyBroadcast? CreateHotkeyBroadcast() => null;
     public IHotkeyReceiver? CreateHotkeyReceiver() => null;
     public IMediaKeyRemote? CreateMediaKeyRemote() => null; // To be implemented later

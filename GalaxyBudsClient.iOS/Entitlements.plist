@@ -2,21 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- TrollStore private entitlements for EAAccessory bypass -->
-
-    <!-- Bypass MFi authentication check for external accessories -->
-    <key>com.apple.private.external-accessory.no-mfi</key>
-    <true/>
-
-    <!-- Allow listing accessories without a matching protocol string -->
-    <key>com.apple.private.externalaccessory.withoutprotocol</key>
-    <true/>
-
-    <!-- General private Bluetooth access for TrollStore apps -->
+    <!-- Core private Bluetooth access - required for BluetoothManager.framework -->
     <key>com.apple.private.bluetooth</key>
     <true/>
 
-    <!-- Bluetooth - allow connecting to remote devices by UUID -->
+    <!-- Elevated Bluetooth access level (used by some system apps on iOS 15) -->
+    <key>com.apple.private.bluetooth.level-5</key>
+    <true/>
+
+    <!-- EAAccessory bypass entitlements (kept for compatibility) -->
+    <key>com.apple.private.external-accessory.no-mfi</key>
+    <true/>
+    <key>com.apple.private.externalaccessory.withoutprotocol</key>
+    <true/>
+
+    <!-- Allow BLE remote UUID connections -->
     <key>com.apple.bluetooth.allow-le-remote-uuid</key>
     <true/>
 </dict>
