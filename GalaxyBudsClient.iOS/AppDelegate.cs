@@ -18,6 +18,9 @@ public class AppDelegate : AvaloniaAppDelegate<App>
     {
         try
         {
+            // Force AOT type inclusion for Splat before ReactiveUI initialization
+            SplatPreservation.EnsureRegistered();
+
             System.IO.File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: AppDelegate constructor hit.\n");
 
             // Catch any unhandled managed exception (covers Avalonia internal init crashes)
