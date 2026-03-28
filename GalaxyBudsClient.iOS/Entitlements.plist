@@ -2,8 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- 使用巨魔 (TrollStore) 时，这个权限可以绕过 MFi 认证强制检查 -->
+    <!-- TrollStore private entitlements for EAAccessory bypass -->
+
+    <!-- Bypass MFi authentication check for external accessories -->
     <key>com.apple.private.external-accessory.no-mfi</key>
+    <true/>
+
+    <!-- Allow listing accessories without a matching protocol string -->
+    <key>com.apple.private.externalaccessory.withoutprotocol</key>
+    <true/>
+
+    <!-- General private Bluetooth access for TrollStore apps -->
+    <key>com.apple.private.bluetooth</key>
+    <true/>
+
+    <!-- Bluetooth - allow connecting to remote devices by UUID -->
+    <key>com.apple.bluetooth.allow-le-remote-uuid</key>
     <true/>
 </dict>
 </plist>

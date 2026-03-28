@@ -40,18 +40,41 @@ public class BluetoothService : IBluetoothService
 
     public Task<BluetoothDevice[]> GetDevicesAsync()
     {
-        var accessories = EAAccessoryManager.SharedAccessoryManager.ConnectedAccessories;
-        var devices = accessories
-            .Select(a => new BluetoothDevice(
-                a.Name,
-                a.SerialNumber, // EA doesn't expose MAC address directly, using SerialNumber as ID
-                true,
-                true,
-                new BluetoothCoD(0), // CoD not easily available via EA
-                null))
-            .ToArray();
+        var logPath = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments),
+            "Logs", "bluetooth.log");
         
-        return Task.FromResult(devices);
+        try
+        {
+            var accessories = EAAccessoryManager.SharedAccessoryManager.ConnectedAccessories;
+            File.AppendAllText(logPath, $"[BT] {DateTime.Now}: EAAccessory ConnectedAccessories count: {accessories?.Length ?? 0}\n");
+            
+            if (accessories != null)
+            {
+                foreach (var acc in accessories)
+                {
+                    File.AppendAllText(logPath, $"[BT] {DateTime.Now}: Found accessory: Name={acc.Name}, Manufacturer={acc.Manufacturer}, SerialNumber={acc.SerialNumber}, Protocols=[{string.Join(",", acc.ProtocolStrings)}]\n");
+                }
+            }
+
+            var devices = (accessories ?? [])
+                .Select(a => new BluetoothDevice(
+                    a.Name,
+                    a.SerialNumber,
+                    true,
+                    true,
+                    new BluetoothCoD(0),
+                    null))
+                .ToArray();
+
+            File.AppendAllText(logPath, $"[BT] {DateTime.Now}: Returning {devices.Length} devices.\n");
+            return Task.FromResult(devices);
+        }
+        catch (Exception ex)
+        {
+            File.AppendAllText(logPath, $"[BT] {DateTime.Now}: GetDevicesAsync ERROR: {ex}\n");
+            return Task.FromResult(Array.Empty<BluetoothDevice>());
+        }
     }
 
     public async Task ConnectAsync(string macAddress, string serviceUuid, CancellationToken cancelToken)
