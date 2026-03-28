@@ -5,6 +5,7 @@ using Foundation;
 using UIKit;
 using Avalonia;
 using Avalonia.iOS;
+using Avalonia.ReactiveUI;
 using ReactiveUI;
 
 namespace GalaxyBudsClient.iOS;
@@ -162,7 +163,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                     if (scene is UIWindowScene windowScene)
                     {
                         window = windowScene.Windows?
-                            .OrderByDescending(w => w.WindowLevel.RawValue)
+                            .OrderByDescending(w => (double)w.WindowLevel)
                             .FirstOrDefault(w => !w.IsHidden);
                         if (window != null) break;
                     }
