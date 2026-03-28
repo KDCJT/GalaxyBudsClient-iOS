@@ -17,11 +17,6 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     private static readonly string LogPath = Path.Combine(DocsPath, "Logs", "boot.log");
 
-    /// <summary>
-    /// Key used to store the Galaxy Buds MAC address in NSUserDefaults.
-    /// </summary>
-    public const string MacAddressKey = "GalaxyBudsMacAddress";
-
     public AppDelegate()
     {
         try
@@ -55,6 +50,11 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             GalaxyBudsClient.Platform.PlatformImpl.InjectExternalBackend(
                 new GalaxyBudsClient.Platform.iOS.iOSPlatformImplCreator());
             File.AppendAllText(LogPath, $"[BOOT] {DateTime.Now}: Platform Backend Injected.\n");
+
+            // Register the dialog callback so PrivateBluetoothService can trigger it
+            // without creating a circular project dependency.
+            GalaxyBudsClient.Platform.iOS.PrivateBluetoothService.ShowMacInputDialog =
+                () => ShowMacSetupDialog();
         }
         catch (Exception ex)
         {
@@ -108,7 +108,8 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
     internal static void ShowMacSetupDialog(Action? onSaved = null)
     {
-        var currentMac = NSUserDefaults.StandardUserDefaults.StringForKey(MacAddressKey) ?? "";
+        var macKey = GalaxyBudsClient.Platform.iOS.PrivateBluetoothService.MacAddressDefaultsKey;
+        var currentMac = NSUserDefaults.StandardUserDefaults.StringForKey(macKey) ?? "";
         var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             "Logs", "boot.log");
 
@@ -116,7 +117,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
         var alert = UIAlertController.Create(
             "配置 Galaxy Buds 设备",
-            "请在 iOS【设置 → 蓝牙】中，点击 Galaxy Buds 旁边的 ⓘ，找到\"地址\"栏（格式：AA:BB:CC:DD:EE:FF）并在此输入。",
+            "请在 iOS【设置 → 蓝牙】中，点击 Galaxy Buds 旁边的 ⓘ，找到\"地址\"栏（格式：AA:BB:CC:DD:EE:FF）并输入。",
             UIAlertControllerStyle.Alert);
 
         alert.AddTextField(tf =>
@@ -133,7 +134,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             var mac = alert.TextFields?.FirstOrDefault()?.Text?.Trim() ?? "";
             if (!string.IsNullOrWhiteSpace(mac))
             {
-                NSUserDefaults.StandardUserDefaults.SetString(mac, MacAddressKey);
+                NSUserDefaults.StandardUserDefaults.SetString(mac, macKey);
                 NSUserDefaults.StandardUserDefaults.Synchronize();
                 File.AppendAllText(logPath, $"[BOOT] {DateTime.Now}: Saved MAC: {mac}\n");
                 onSaved?.Invoke();
@@ -142,7 +143,6 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
         alert.AddAction(UIAlertAction.Create("取消", UIAlertActionStyle.Cancel, null));
 
-        // Find the currently visible view controller to present from
         var rootVc = UIApplication.SharedApplication.KeyWindow?.RootViewController;
         var presenter = GetTopViewController(rootVc);
         presenter?.PresentViewController(alert, true, null);

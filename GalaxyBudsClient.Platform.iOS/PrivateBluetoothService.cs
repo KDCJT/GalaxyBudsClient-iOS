@@ -18,6 +18,16 @@ public class PrivateBluetoothService : IBluetoothService
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
         "Logs", "bluetooth.log");
 
+    /// <summary>NSUserDefaults key for the saved Galaxy Buds MAC address.</summary>
+    public const string MacAddressDefaultsKey = "GalaxyBudsMacAddress";
+
+    /// <summary>
+    /// Callback registered by AppDelegate to show the native MAC input dialog.
+    /// PrivateBluetoothService invokes this when no device is configured,
+    /// avoiding a cross-project dependency on AppDelegate.
+    /// </summary>
+    public static Action? ShowMacInputDialog;
+
     private nint _btManager = nint.Zero;
     private nint _connectedDevice = nint.Zero;
 
@@ -222,21 +232,21 @@ public class PrivateBluetoothService : IBluetoothService
             }
 
             // 2. Fall back to NSUserDefaults saved MAC address
-            var savedMac = NSUserDefaults.StandardUserDefaults.StringForKey(AppDelegate.MacAddressKey);
+            var savedMac = NSUserDefaults.StandardUserDefaults.StringForKey(MacAddressDefaultsKey);
             if (!string.IsNullOrWhiteSpace(savedMac))
             {
-                Log($"GetDevicesAsync: using saved MAC from NSUserDefaults: {savedMac}");
+                Log($"GetDevicesAsync: using saved MAC: {savedMac}");
                 return Task.FromResult(new[]
                 {
                     new BluetoothDevice("Galaxy Buds (已保存)", savedMac, true, false, new BluetoothCoD(0), null)
                 });
             }
 
-            // 3. No device configured - prompt user to enter MAC
-            Log("GetDevicesAsync: no devices and no saved MAC. Showing setup dialog.");
+            // 3. No device configured - invoke the registered dialog callback
+            Log("GetDevicesAsync: no saved MAC. Triggering MAC input dialog.");
             NSRunLoop.Main.BeginInvokeOnMainThread(() =>
             {
-                try { AppDelegate.ShowMacSetupDialog(); } catch { }
+                try { ShowMacInputDialog?.Invoke(); } catch { }
             });
 
             return Task.FromResult(Array.Empty<BluetoothDevice>());
