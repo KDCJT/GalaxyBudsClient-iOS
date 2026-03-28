@@ -202,8 +202,9 @@ public class PrivateBluetoothService : IBluetoothService
                 if (plistData == null) { Log($"NSData.FromFile returned nil for {path}"); continue; }
 
                 NSError? err;
+                NSPropertyListFormat fmt = NSPropertyListFormat.Binary;
                 var dict = (NSDictionary?)NSPropertyListSerialization.PropertyListWithData(
-                    plistData, NSPropertyListReadOptions.Immutable, out _, out err);
+                    plistData, NSPropertyListReadOptions.Immutable, ref fmt, out err);
 
                 if (dict == null)
                 {
