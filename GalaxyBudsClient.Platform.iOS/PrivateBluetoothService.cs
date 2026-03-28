@@ -8,6 +8,7 @@ using Foundation;
 using GalaxyBudsClient.Platform.Interfaces;
 using GalaxyBudsClient.Platform.Model;
 using ObjCRuntime;
+using UIKit;
 
 namespace GalaxyBudsClient.Platform.iOS;
 
@@ -200,26 +201,44 @@ public class PrivateBluetoothService : IBluetoothService
 
     public Task<BluetoothDevice[]> GetDevicesAsync()
     {
-        if (_btManager == nint.Zero)
-            return Task.FromResult(Array.Empty<BluetoothDevice>());
-
         try
         {
-            foreach (var sel in new[] { "pairedDevices", "connectedDevices" })
+            // 1. Try BluetoothManager private API
+            if (_btManager != nint.Zero)
             {
-                try
+                foreach (var sel in new[] { "pairedDevices", "connectedDevices" })
                 {
-                    var listPtr = MsgSend(_btManager, Selector.GetHandle(sel));
-                    if (listPtr == nint.Zero) continue;
-                    var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
-                    if (count == 0) continue;
-                    Log($"GetDevicesAsync: '{sel}' returned {count} devices");
-                    return Task.FromResult(ReadDeviceArray(listPtr, (int)count));
+                    try
+                    {
+                        var listPtr = MsgSend(_btManager, Selector.GetHandle(sel));
+                        if (listPtr == nint.Zero) continue;
+                        var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
+                        if (count == 0) continue;
+                        Log($"GetDevicesAsync: '{sel}' returned {count} devices");
+                        return Task.FromResult(ReadDeviceArray(listPtr, (int)count));
+                    }
+                    catch { }
                 }
-                catch { }
             }
 
-            Log("GetDevicesAsync: no devices found via API.");
+            // 2. Fall back to NSUserDefaults saved MAC address
+            var savedMac = NSUserDefaults.StandardUserDefaults.StringForKey(AppDelegate.MacAddressKey);
+            if (!string.IsNullOrWhiteSpace(savedMac))
+            {
+                Log($"GetDevicesAsync: using saved MAC from NSUserDefaults: {savedMac}");
+                return Task.FromResult(new[]
+                {
+                    new BluetoothDevice("Galaxy Buds (已保存)", savedMac, true, false, new BluetoothCoD(0), null)
+                });
+            }
+
+            // 3. No device configured - prompt user to enter MAC
+            Log("GetDevicesAsync: no devices and no saved MAC. Showing setup dialog.");
+            NSRunLoop.Main.BeginInvokeOnMainThread(() =>
+            {
+                try { AppDelegate.ShowMacSetupDialog(); } catch { }
+            });
+
             return Task.FromResult(Array.Empty<BluetoothDevice>());
         }
         catch (Exception ex)
