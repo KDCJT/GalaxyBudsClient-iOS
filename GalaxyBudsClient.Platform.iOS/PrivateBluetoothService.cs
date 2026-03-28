@@ -11,14 +11,6 @@ using ObjCRuntime;
 
 namespace GalaxyBudsClient.Platform.iOS;
 
-/// <summary>
-/// Bluetooth service using the private iOS BluetoothManager.framework.
-/// Uses direct P/Invoke to libobjc.dylib to avoid .NET 10 accessibility issues.
-///
-/// Key insight: BluetoothManager communicates via XPC with bluetoothd.
-/// A registered delegate is required before pairedDevices is populated.
-/// As a fallback, we support manual MAC address entry via deviceForAddress:.
-/// </summary>
 public class PrivateBluetoothService : IBluetoothService
 {
     private static readonly string LogPath = Path.Combine(
@@ -27,7 +19,6 @@ public class PrivateBluetoothService : IBluetoothService
 
     private nint _btManager = nint.Zero;
     private nint _connectedDevice = nint.Zero;
-    private BluetoothManagerDelegate? _managerDelegate;
 
     public event EventHandler<BluetoothException>? BluetoothErrorAsync;
     public event EventHandler? Connecting;
@@ -38,7 +29,7 @@ public class PrivateBluetoothService : IBluetoothService
 
     public bool IsStreamConnected { get; private set; }
 
-    // --- P/Invoke to libobjc.dylib ---
+    // --- P/Invoke: objc_msgSend overloads ---
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern nint MsgSend(nint receiver, nint selector);
 
@@ -58,8 +49,21 @@ public class PrivateBluetoothService : IBluetoothService
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern nuint MsgSendUint(nint receiver, nint selector);
 
-    [DllImport("/usr/lib/libSystem.B.dylib")]
-    private static extern nint dlopen(string path, int mode);
+    // --- P/Invoke: ObjC runtime introspection ---
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "class_copyMethodList")]
+    private static extern nint ClassCopyMethodList(nint cls, out uint outCount);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "method_getName")]
+    private static extern nint MethodGetName(nint method);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "sel_getName")]
+    private static extern nint SelGetNamePtr(nint selector);
+
+    [DllImport("/usr/lib/libSystem.B.dylib", EntryPoint = "dlopen")]
+    private static extern nint DlOpen(string path, int mode);
+
+    [DllImport("/usr/lib/libSystem.B.dylib", EntryPoint = "free")]
+    private static extern void Free(nint ptr);
 
     public PrivateBluetoothService()
     {
@@ -71,7 +75,7 @@ public class PrivateBluetoothService : IBluetoothService
         try
         {
             Log("Initializing PrivateBluetoothService...");
-            dlopen("/System/Library/PrivateFrameworks/BluetoothManager.framework/BluetoothManager", 1);
+            DlOpen("/System/Library/PrivateFrameworks/BluetoothManager.framework/BluetoothManager", 1);
 
             var btClass = Class.GetHandle("BluetoothManager");
             if (btClass == nint.Zero) { Log("ERROR: BluetoothManager class not found"); return; }
@@ -79,48 +83,74 @@ public class PrivateBluetoothService : IBluetoothService
             _btManager = MsgSend(btClass, Selector.GetHandle("sharedInstance"));
             Log($"BluetoothManager sharedInstance: 0x{_btManager:X}");
 
-            if (_btManager == nint.Zero) { Log("ERROR: sharedInstance returned nil"); return; }
+            if (_btManager == nint.Zero) { Log("ERROR: sharedInstance nil"); return; }
 
-            // CRITICAL: Register a delegate before pairedDevices will work.
-            // The manager needs to establish XPC connection with bluetoothd.
-            _managerDelegate = new BluetoothManagerDelegate(
-                onReady: () => Log("BluetoothManager delegate: bluetoothManagerReady fired!"),
-                onDeviceFound: (ptr, name, addr) => Log($"Delegate DeviceFound: {name} @ {addr}"),
-                onData: (data) => NewDataAvailable?.Invoke(this, data),
-                onDisconnect: () => {
-                    IsStreamConnected = false;
-                    Disconnected?.Invoke(this, "Device disconnected");
-                });
+            // Dump ALL instance methods so we know exactly what's available on this iOS version
+            DumpAllMethods(btClass, "BluetoothManager");
 
-            // Register as delegate ([btManager addDelegate:self])
-            MsgSendVoidP(_btManager, Selector.GetHandle("addDelegate:"), _managerDelegate.Handle);
-            Log("addDelegate: called");
+            // Also try BTLocalDevice which is the newer API on iOS 15
+            var btLocalClass = Class.GetHandle("BTLocalDevice");
+            if (btLocalClass != nint.Zero)
+            {
+                Log("BTLocalDevice class found, dumping its methods too...");
+                DumpAllMethods(btLocalClass, "BTLocalDevice");
+                var localDev = MsgSend(btLocalClass, Selector.GetHandle("sharedInstance"));
+                Log($"BTLocalDevice sharedInstance: 0x{localDev:X}");
+                if (localDev != nint.Zero)
+                {
+                    // Try pairedDevices on BTLocalDevice
+                    TryListDevices(localDev, "BTLocalDevice");
+                }
+            }
+            else
+            {
+                Log("BTLocalDevice class NOT found.");
+            }
 
-            // Try to enumerate selectors for discovery (multi-try)
-            LogPairedDevicesAttempts();
+            // Try all known device-list selectors on BluetoothManager
+            TryListDevices(_btManager, "BluetoothManager");
         }
         catch (Exception ex) { Log($"InitBluetoothManager ERROR: {ex}"); }
     }
 
-    private void LogPairedDevicesAttempts()
+    private void DumpAllMethods(nint classHandle, string className)
     {
-        var selectors = new[] { "pairedDevices", "connectedDevices", "devices", "deviceList" };
+        try
+        {
+            var methodsPtr = ClassCopyMethodList(classHandle, out uint count);
+            Log($"=== {className}: {count} instance methods ===");
+            for (uint i = 0; i < count; i++)
+            {
+                var methodPtr = Marshal.ReadIntPtr((IntPtr)(methodsPtr + (nint)(i * IntPtr.Size)));
+                var selPtr = MethodGetName(methodPtr);
+                var namePtr = SelGetNamePtr(selPtr);
+                var name = Marshal.PtrToStringAnsi((IntPtr)namePtr) ?? "?";
+                Log($"  {name}");
+            }
+            Free(methodsPtr);
+        }
+        catch (Exception ex) { Log($"DumpAllMethods({className}) ERROR: {ex.Message}"); }
+    }
+
+    private void TryListDevices(nint manager, string tag)
+    {
+        var selectors = new[] { "pairedDevices", "connectedDevices", "devices", "deviceList", "allDevices" };
         foreach (var sel in selectors)
         {
             try
             {
-                var ptr = MsgSend(_btManager, Selector.GetHandle(sel));
-                if (ptr != nint.Zero)
-                {
-                    var count = MsgSendUint(ptr, Selector.GetHandle("count"));
-                    Log($"  Selector '{sel}' → count={count}, ptr=0x{ptr:X}");
-                }
-                else
-                {
-                    Log($"  Selector '{sel}' → nil");
-                }
+                var ptr = MsgSend(manager, Selector.GetHandle(sel));
+                if (ptr == nint.Zero) { Log($"[{tag}] '{sel}' → nil"); continue; }
+                var count = MsgSendUint(ptr, Selector.GetHandle("count"));
+                Log($"[{tag}] '{sel}' → count={count}");
             }
-            catch (Exception ex) { Log($"  Selector '{sel}' → exception: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                // Only log the reason, not the full stack trace for known "unrecognized selector" cases
+                var reason = ex.Message.Contains("unrecognized selector") 
+                    ? "unrecognized selector" : ex.Message;
+                Log($"[{tag}] '{sel}' → {reason}");
+            }
         }
     }
 
@@ -131,25 +161,26 @@ public class PrivateBluetoothService : IBluetoothService
 
         try
         {
-            // Try all known selectors
-            foreach (var sel in new[] { "pairedDevices", "connectedDevices", "devices" })
+            foreach (var sel in new[] { "pairedDevices", "connectedDevices" })
             {
-                var listPtr = MsgSend(_btManager, Selector.GetHandle(sel));
-                if (listPtr == nint.Zero) continue;
-
-                var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
-                if (count == 0) continue;
-
-                Log($"GetDevicesAsync: '{sel}' returned {count} devices");
-                return Task.FromResult(ReadDeviceArray(listPtr, (int)count));
+                try
+                {
+                    var listPtr = MsgSend(_btManager, Selector.GetHandle(sel));
+                    if (listPtr == nint.Zero) continue;
+                    var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
+                    if (count == 0) continue;
+                    Log($"GetDevicesAsync: '{sel}' returned {count} devices");
+                    return Task.FromResult(ReadDeviceArray(listPtr, (int)count));
+                }
+                catch { }
             }
 
-            Log("GetDevicesAsync: all selectors returned empty. User must enter MAC manually.");
+            Log("GetDevicesAsync: no devices found via API.");
             return Task.FromResult(Array.Empty<BluetoothDevice>());
         }
         catch (Exception ex)
         {
-            Log($"GetDevicesAsync ERROR: {ex}");
+            Log($"GetDevicesAsync ERROR: {ex.Message}");
             return Task.FromResult(Array.Empty<BluetoothDevice>());
         }
     }
@@ -157,16 +188,15 @@ public class PrivateBluetoothService : IBluetoothService
     private BluetoothDevice[] ReadDeviceArray(nint listPtr, int count)
     {
         var result = new List<BluetoothDevice>();
-        var objAtSel = Selector.GetHandle("objectAtIndex:");
         for (nuint i = 0; i < (nuint)count; i++)
         {
             try
             {
-                var devPtr = MsgSendP(listPtr, objAtSel, (nint)i);
+                var devPtr = MsgSendP(listPtr, Selector.GetHandle("objectAtIndex:"), (nint)i);
                 var name = GetNSString(devPtr, "name");
                 var addr = GetNSString(devPtr, "address");
                 var connected = MsgSendBool(devPtr, Selector.GetHandle("isConnected"));
-                Log($"  [{i}] {name} @ {addr} connected={connected}");
+                Log($"  [{i}] {name} @ {addr} conn={connected}");
                 result.Add(new BluetoothDevice(name, addr, true, connected, new BluetoothCoD(0), null));
             }
             catch (Exception ex) { Log($"  [{i}] error: {ex.Message}"); }
@@ -182,42 +212,39 @@ public class PrivateBluetoothService : IBluetoothService
             Connecting?.Invoke(this, EventArgs.Empty);
 
             if (_btManager == nint.Zero)
-                throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
-                    "BluetoothManager 未初始化");
+                throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed, "BluetoothManager 未初始化");
 
-            // Try to get device: first from pairedDevices list, then via deviceForAddress:
-            nint targetDevice = FindDeviceByAddress(macAddress);
+            nint targetDevice = nint.Zero;
 
-            if (targetDevice == nint.Zero)
+            // Try deviceForAddress: with the user-provided MAC
+            try
             {
-                Log("Device not in paired list, trying deviceForAddress:");
                 using var nsAddr = new NSString(macAddress);
-                targetDevice = MsgSendP(_btManager,
-                    Selector.GetHandle("deviceForAddress:"), nsAddr.Handle);
-                Log($"deviceForAddress: returned 0x{targetDevice:X}");
+                targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceForAddress:"), nsAddr.Handle);
+                Log($"deviceForAddress: → 0x{targetDevice:X}");
             }
+            catch (Exception ex) { Log($"deviceForAddress: error: {ex.Message}"); }
 
             if (targetDevice == nint.Zero)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
-                    $"找不到设备 {macAddress}，请确认 MAC 地址正确且耳机已在 iOS 蓝牙设置中配对");
+                    $"找不到设备 {macAddress}。请确认 MAC 地址正确并查看 bluetooth.log 中的方法列表。");
 
             _connectedDevice = targetDevice;
-            Log("Calling connectDevice:");
             MsgSendVoidP(_btManager, Selector.GetHandle("connectDevice:"), targetDevice);
+            Log("connectDevice: called");
 
             await Task.Delay(2500, cancelToken);
 
-            bool isNowConnected = MsgSendBool(targetDevice, Selector.GetHandle("isConnected"));
-            Log($"isConnected after connect: {isNowConnected}");
+            bool isConnected = MsgSendBool(targetDevice, Selector.GetHandle("isConnected"));
+            Log($"isConnected={isConnected}");
 
-            if (!isNowConnected)
+            if (!isConnected)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
                     "connectDevice: 后 isConnected 仍为 false");
 
             IsStreamConnected = true;
             Connected?.Invoke(this, EventArgs.Empty);
             RfcommConnected?.Invoke(this, EventArgs.Empty);
-            TryOpenRfcommChannel(targetDevice);
         }
         catch (BluetoothException) { throw; }
         catch (Exception ex)
@@ -227,61 +254,11 @@ public class PrivateBluetoothService : IBluetoothService
         }
     }
 
-    private nint FindDeviceByAddress(string mac)
-    {
-        foreach (var sel in new[] { "pairedDevices", "connectedDevices", "devices" })
-        {
-            try
-            {
-                var listPtr = MsgSend(_btManager, Selector.GetHandle(sel));
-                if (listPtr == nint.Zero) continue;
-                var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
-                for (nuint i = 0; i < count; i++)
-                {
-                    var devPtr = MsgSendP(listPtr, Selector.GetHandle("objectAtIndex:"), (nint)i);
-                    var addr = GetNSString(devPtr, "address");
-                    if (string.Equals(addr, mac, StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(addr.Replace(":", "-"), mac.Replace(":", "-"),
-                            StringComparison.OrdinalIgnoreCase))
-                        return devPtr;
-                }
-            }
-            catch { }
-        }
-        return nint.Zero;
-    }
-
-    private void TryOpenRfcommChannel(nint devicePtr)
-    {
-        var delegateHandle = (_managerDelegate as NSObject)!.Handle;
-        // Try multiple known selector names for iOS 15 RFCOMM
-        var selectors = new[] {
-            ("openRFCOMMChannelAsync:delegate:", true),
-            ("openRFCOMMChannel:delegate:", true),
-            ("connectRFCOMM:", false)
-        };
-
-        foreach (var (sel, hasDelegate) in selectors)
-        {
-            try
-            {
-                Log($"Trying RFCOMM selector: {sel}");
-                if (hasDelegate)
-                    MsgSendVoidPP(devicePtr, Selector.GetHandle(sel), (nint)1, delegateHandle);
-                else
-                    MsgSendVoidP(devicePtr, Selector.GetHandle(sel), (nint)1);
-                Log($"RFCOMM selector {sel} succeeded.");
-                return;
-            }
-            catch (Exception ex) { Log($"RFCOMM selector {sel} failed: {ex.Message}"); }
-        }
-    }
-
-    private string GetNSString(nint obj, string selectorName)
+    private string GetNSString(nint obj, string sel)
     {
         try
         {
-            var ptr = MsgSend(obj, Selector.GetHandle(selectorName));
+            var ptr = MsgSend(obj, Selector.GetHandle(sel));
             return ptr != nint.Zero ? Runtime.GetNSObject<NSString>(ptr)?.ToString() ?? "" : "";
         }
         catch { return ""; }
@@ -294,11 +271,10 @@ public class PrivateBluetoothService : IBluetoothService
             if (_connectedDevice != nint.Zero && _btManager != nint.Zero)
                 MsgSendVoidP(_btManager, Selector.GetHandle("disconnectDevice:"), _connectedDevice);
         }
-        catch (Exception ex) { Log($"DisconnectAsync ERROR: {ex.Message}"); }
-
+        catch { }
         IsStreamConnected = false;
         _connectedDevice = nint.Zero;
-        Disconnected?.Invoke(this, "Disconnected by user");
+        Disconnected?.Invoke(this, "Disconnected");
         return Task.CompletedTask;
     }
 
@@ -316,58 +292,6 @@ public class PrivateBluetoothService : IBluetoothService
 
     private static void Log(string msg)
     {
-        try { File.AppendAllText(LogPath, $"[BT-Private] {DateTime.Now}: {msg}\n"); } catch { }
+        try { File.AppendAllText(LogPath, $"[BT] {DateTime.Now}: {msg}\n"); } catch { }
     }
-}
-
-/// <summary>
-/// NSObject delegate for BluetoothManager private callbacks.
-/// </summary>
-[Register("BluetoothManagerDelegate")]
-internal class BluetoothManagerDelegate : NSObject
-{
-    private readonly Action _onReady;
-    private readonly Action<nint, string, string> _onDeviceFound;
-    private readonly Action<byte[]> _onData;
-    private readonly Action _onDisconnect;
-
-    public BluetoothManagerDelegate(Action onReady,
-        Action<nint, string, string> onDeviceFound,
-        Action<byte[]> onData,
-        Action onDisconnect)
-    {
-        _onReady = onReady;
-        _onDeviceFound = onDeviceFound;
-        _onData = onData;
-        _onDisconnect = onDisconnect;
-    }
-
-    // Called when BluetoothManager is ready (XPC connection established with bluetoothd)
-    [Export("bluetoothManagerReady")]
-    public void BluetoothManagerReady() => _onReady();
-
-    [Export("bluetoothAvailabilityChanged:")]
-    public void BluetoothAvailabilityChanged(bool available)
-    {
-        File.AppendAllText(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "Logs", "bluetooth.log"),
-            $"[BT-Private] {DateTime.Now}: bluetoothAvailabilityChanged: {available}\n");
-    }
-
-    [Export("bluetoothDevice:rfcommChannelData:length:")]
-    public void RfcommChannelData(nint device, nint dataPtr, nint length)
-    {
-        try
-        {
-            if (dataPtr == nint.Zero || length <= 0) return;
-            var data = new byte[(int)length];
-            Marshal.Copy(dataPtr, data, 0, (int)length);
-            _onData(data);
-        }
-        catch { }
-    }
-
-    [Export("bluetoothDevice:closedChannel:")]
-    public void ClosedChannel(nint device, nint channel) => _onDisconnect();
 }
