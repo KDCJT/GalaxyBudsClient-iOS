@@ -164,7 +164,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                     {
                         window = windowScene.Windows?
                             .OrderByDescending(w => (double)w.WindowLevel)
-                            .FirstOrDefault(w => !w.IsHidden);
+                            .FirstOrDefault(w => !w.Hidden);
                         if (window != null) break;
                     }
                 }
