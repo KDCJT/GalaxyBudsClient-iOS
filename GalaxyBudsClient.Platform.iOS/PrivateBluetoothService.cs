@@ -326,7 +326,7 @@ public class PrivateBluetoothService : IBluetoothService
                 var devPtr = MsgSendP(listPtr, Selector.GetHandle("objectAtIndex:"), (nint)i);
                 var name = GetNSString(devPtr, "name");
                 var addr = GetNSString(devPtr, "address");
-                var connected = MsgSendBool(devPtr, Selector.GetHandle("isConnected"));
+                var connected = MsgSendBool(devPtr, Selector.GetHandle("connected"));
                 Log($"  [{i}] {name} @ {addr} conn={connected}");
                 result.Add(new BluetoothDevice(name, addr, true, connected, new BluetoothCoD(0), null));
             }
@@ -357,7 +357,26 @@ public class PrivateBluetoothService : IBluetoothService
                 // removed deviceFromIdentifier fallback due to crash
             }
             catch (Exception ex) { Log($"deviceFromAddressString: error: {ex.Message}"); }
-
+                if (targetDevice == nint.Zero)
+                {
+                    Log("deviceFromAddressString: returned nil. Manually searching pairedDevices list...");
+                    var listPtr = MsgSend(_btManager, Selector.GetHandle("pairedDevices"));
+                    if (listPtr != nint.Zero)
+                    {
+                        var count = MsgSendUint(listPtr, Selector.GetHandle("count"));
+                        for (nuint i = 0; i < (nuint)count; i++)
+                        {
+                            var devPtr = MsgSendP(listPtr, Selector.GetHandle("objectAtIndex:"), (nint)i);
+                            var addr = GetNSString(devPtr, "address");
+                            if (string.Equals(addr, macAddress, StringComparison.OrdinalIgnoreCase))
+                            {
+                                targetDevice = devPtr;
+                                Log($"Found manual match for {macAddress} at 0x{targetDevice:X}");
+                                break;
+                            }
+                        }
+                    }
+                }
             if (targetDevice == nint.Zero)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
                     $"无法获取设备对象（deviceFromAddressString: 返回 nil）。" +
@@ -370,7 +389,7 @@ public class PrivateBluetoothService : IBluetoothService
             await Task.Delay(3000, cancelToken);
 
             bool isConnected = false;
-            try { isConnected = MsgSendBool(targetDevice, Selector.GetHandle("isConnected")); }
+            try { isConnected = MsgSendBool(targetDevice, Selector.GetHandle("connected")); }
             catch { }
             Log($"isConnected after connectDevice: = {isConnected}");
 
