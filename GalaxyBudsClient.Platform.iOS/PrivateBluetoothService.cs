@@ -117,6 +117,7 @@ public class PrivateBluetoothService : IBluetoothService
     {
         try
         {
+            Log("[BT-Fix] GetDevicesAsync invoked (v2) with connected selector fix");
             // === Strategy 1: BluetoothManager private API ===
             if (_btManager != nint.Zero)
             {
@@ -339,7 +340,7 @@ public class PrivateBluetoothService : IBluetoothService
     {
         try
         {
-            Log($"ConnectAsync: MAC={macAddress}");
+            Log($"[BT-Fix] ConnectAsync invoked (v2): MAC={macAddress}");
             Connecting?.Invoke(this, EventArgs.Empty);
 
             if (_btManager == nint.Zero)
@@ -357,9 +358,10 @@ public class PrivateBluetoothService : IBluetoothService
                 // removed deviceFromIdentifier fallback due to crash
             }
             catch (Exception ex) { Log($"deviceFromAddressString: error: {ex.Message}"); }
-                if (targetDevice == nint.Zero)
-                {
-                    Log("deviceFromAddressString: returned nil. Manually searching pairedDevices list...");
+
+            if (targetDevice == nint.Zero)
+            {
+                Log("deviceFromAddressString: returned nil. Manually searching pairedDevices list...");
                     var listPtr = MsgSend(_btManager, Selector.GetHandle("pairedDevices"));
                     if (listPtr != nint.Zero)
                     {
@@ -377,6 +379,7 @@ public class PrivateBluetoothService : IBluetoothService
                         }
                     }
                 }
+            }
             if (targetDevice == nint.Zero)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
                     $"无法获取设备对象（deviceFromAddressString: 返回 nil）。" +
