@@ -379,7 +379,6 @@ public class PrivateBluetoothService : IBluetoothService
                         }
                     }
                 }
-            }
             if (targetDevice == nint.Zero)
                 throw new BluetoothException(BluetoothException.ErrorCodes.ConnectFailed,
                     $"无法获取设备对象（deviceFromAddressString: 返回 nil）。" +
