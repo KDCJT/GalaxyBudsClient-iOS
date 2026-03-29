@@ -10,6 +10,10 @@
     <key>com.apple.private.bluetooth.level-5</key>
     <true/>
 
+    <!-- CRITICAL: System Bluetooth XPC channel access (Without this, iOS 15 blocks initialized instances) -->
+    <key>com.apple.bluetooth.system</key>
+    <true/>
+
     <!-- EAAccessory bypass entitlements (kept for compatibility) -->
     <key>com.apple.private.external-accessory.no-mfi</key>
     <true/>

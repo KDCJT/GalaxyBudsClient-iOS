@@ -354,12 +354,7 @@ public class PrivateBluetoothService : IBluetoothService
                 using var nsAddr = new NSString(macAddress);
                 targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceFromAddressString:"), nsAddr.Handle);
                 Log($"deviceFromAddressString: → 0x{targetDevice:X}");
-
-                if (targetDevice == nint.Zero)
-                {
-                    targetDevice = MsgSendP(_btManager, Selector.GetHandle("deviceFromIdentifier:"), nsAddr.Handle);
-                    Log($"deviceFromIdentifier: → 0x{targetDevice:X}");
-                }
+                // removed deviceFromIdentifier fallback due to crash
             }
             catch (Exception ex) { Log($"deviceFromAddressString: error: {ex.Message}"); }
 
